@@ -15,21 +15,41 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Index',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="square.grid.2x2.fill" color={color} />
+          ),
         }}
       />
+      
+      {/* ✅ Home Screen */}
       <Tabs.Screen
-        name="explore"
+        name="HomeScreen"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Home',
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={28} name="house.fill" color={color} />
+          ),
         }}
       />
+
+      {/* ✅ Upload Report Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="UploadReport"
+        options={{
+          href: null,
+          title: 'Upload Report',
+        }}
+      />
+
+      {/* Existing screens if you still need them */}
+      
+    
     </Tabs>
   );
 }
