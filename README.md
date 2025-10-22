@@ -43,7 +43,7 @@ The system allows users to sign in, submit wildlife reports with details (specie
 git clone https://github.com/AzkaH14/Wildyn-North.git
 cd REPOSITORY_NAME
 
-## 🛠️ Team members
-Member 1: Azka Humayon
-Member 2: Aleeha Akhlaq
-Member 3: Rida Fatima
+## 🛠️ Project team members
+Member 1: Azka Humayon 47631
+Member 2: Aleeha Akhlaq 46174
+Member 3: Rida Fatima 48403
