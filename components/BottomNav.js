@@ -9,7 +9,7 @@ const BottomNav = ({ active }) => {
   const navItems = [
     { icon: 'book', label: 'ResLib', route: '/(tabs)/ResourceLibrary' },
     { icon: 'scan-circle-outline', label: 'Specie AI', route: '/(tabs)/SpecieAI' },
-    { icon: 'home', label: 'Home', route: '/(tabs)/Home' },
+    { icon: 'home', label: 'Home', route: '/(tabs)/HomeScreen' },
     { icon: 'list', label: 'Reports', route: '/(tabs)/ReportsFeed' },
     { icon: 'settings', label: 'Settings', route: '/(tabs)/Settings' },
   ];

@@ -1,5 +1,5 @@
-import React, { useRef, useState } from 'react';
-import { useRouter } from 'expo-router';
+import React, { useRef, useState, useEffect } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 
@@ -58,6 +59,9 @@ const HomeScreen = () => {
   // ✅ Sidebar animation
   const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Profile image state
+  const [profileImage, setProfileImage] = useState(null);
 
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
@@ -68,6 +72,29 @@ const HomeScreen = () => {
     }).start();
     setSidebarOpen(!sidebarOpen);
   };
+
+  // Load profile image from storage
+  const loadProfileImage = async () => {
+    try {
+      const savedProfileImage = await AsyncStorage.getItem('profileImage');
+      if (savedProfileImage) {
+        setProfileImage(savedProfileImage);
+      }
+    } catch (error) {
+      console.log('Error loading profile image:', error);
+    }
+  };
+
+  // Load profile image on component mount and when screen comes into focus
+  useEffect(() => {
+    loadProfileImage();
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      loadProfileImage();
+    }, [])
+  );
 
   const handleLogout = () => {
     console.log('Logout clicked');
@@ -84,9 +111,16 @@ const HomeScreen = () => {
           <Ionicons name="menu" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Home</Text>
-        <TouchableOpacity onPress={() => console.log('Profile pressed')}>
-          <Ionicons name="person-circle" size={30} color="#000" />
-        </TouchableOpacity>
+       <TouchableOpacity onPress={() => router.push('/(tabs)/UserProfile')}>
+  {profileImage ? (
+    <Image
+      source={{ uri: profileImage }}
+      style={{ width: 35, height: 35, borderRadius: 20 }}
+    />
+  ) : (
+    <Ionicons name="person-circle" size={30} color="#000" />
+  )}
+</TouchableOpacity>
       </View>
 
       {/* Main Content */}

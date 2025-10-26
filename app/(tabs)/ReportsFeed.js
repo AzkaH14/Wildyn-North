@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,22 +10,63 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Animated,
+  Easing,
+  Dimensions,
+  TouchableWithoutFeedback,
 } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import BottomNav from '../../components/BottomNav';
-import { useRouter } from 'expo-router';
 
+const { width } = Dimensions.get('window');
 const offensiveWords = ['badword', 'offensive', 'ugly'];
 
 const ReportFeed = () => {
   const router = useRouter();
   const { data } = useLocalSearchParams();
-  const reports = data ? JSON.parse(data) : null;
+  const parsed = useMemo(() => (data ? JSON.parse(data) : null), [data]); // ✅ useMemo added
+
+  const [reportsList, setReportsList] = useState([]);
+
+  // ✅ Fixed useEffect (runs only once, no infinite loop)
+  useEffect(() => {
+    if (parsed) {
+      const newReports = Array.isArray(parsed) ? parsed : [parsed];
+      setReportsList((prev) => {
+        const existingIds = prev.map((r) => r.id || r.timestamp);
+        const uniqueReports = newReports.filter(
+          (r) => !existingIds.includes(r.id || r.timestamp)
+        );
+        return [...uniqueReports, ...prev];
+      });
+    }
+    // ✅ run only once when screen mounts
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [searchText, setSearchText] = useState('');
+
+  // ✅ Sidebar animation
+  const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const toggleSidebar = () => {
+    Animated.timing(slideAnim, {
+      toValue: sidebarOpen ? -width * 0.7 : 0,
+      duration: 250,
+      easing: Easing.ease,
+      useNativeDriver: false,
+    }).start();
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleLogout = () => {
+    console.log('Logout clicked');
+    toggleSidebar();
+  };
 
   const handleAddComment = () => {
     const lower = newComment.toLowerCase();
@@ -48,32 +89,61 @@ const ReportFeed = () => {
   };
 
   const filteredReports = useMemo(() => {
-    if (!reports) return [];
-    if (!searchText.trim()) return Array.isArray(reports) ? reports : [reports];
-    return (Array.isArray(reports) ? reports : [reports]).filter((r) =>
+    if (!reportsList.length) return [];
+    if (!searchText.trim()) return reportsList;
+    return reportsList.filter((r) =>
       r.specieName?.toLowerCase().includes(searchText.toLowerCase())
     );
-  }, [reports, searchText]);
+  }, [reportsList, searchText]);
 
-  if (!reports) {
+  if (!reportsList.length) {
     return (
       <View style={styles.centered}>
         <Text>No report data found.</Text>
-        <BottomNav />
+        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} /> 
+        {/* ✅ Adjust path if your HomeScreen is in another folder */}
       </View>
     );
   }
 
   return (
     <View style={styles.wrapper}>
+      {/* ✅ Top bar */}
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={() => Alert.alert('Menu clicked')}>
+        <TouchableOpacity onPress={toggleSidebar}>
           <Ionicons name="menu-outline" size={28} color="#000" />
         </TouchableOpacity>
         <Text style={styles.topTitle}>Reports</Text>
         <View style={{ width: 28 }} />
       </View>
 
+      {/* ✅ Sidebar Overlay */}
+      {sidebarOpen && (
+        <TouchableWithoutFeedback onPress={toggleSidebar}>
+          <View style={styles.overlay} />
+        </TouchableWithoutFeedback>
+      )}
+
+      {/* ✅ Sidebar sliding menu */}
+      <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
+        <Text style={styles.sidebarTitle}>Menu</Text>
+        <TouchableOpacity style={styles.sidebarItem} onPress={handleLogout}>
+          <Ionicons name="log-out-outline" size={22} color="#000" />
+          <Text style={styles.sidebarText}>Logout</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => router.push('/(tabs)/ReportsFeed')}>
+          <Ionicons name="document-text-outline" size={22} color="#000" />
+          <Text style={styles.sidebarText}>My Reports</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('Support')}>
+          <Ionicons name="help-circle-outline" size={22} color="#000" />
+          <Text style={styles.sidebarText}>Support</Text>
+        </TouchableOpacity>
+      </Animated.View>
+
+      {/* ✅ Search bar */}
       <View style={styles.searchBar}>
         <Ionicons name="search-outline" size={20} color="#666" />
         <TextInput
@@ -84,6 +154,7 @@ const ReportFeed = () => {
         />
       </View>
 
+      {/* ✅ Feed section */}
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -148,7 +219,9 @@ const ReportFeed = () => {
         />
       </KeyboardAvoidingView>
 
-      <BottomNav />
+      {/* ✅ Bottom navigation (Home navigates properly) */}
+      <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} /> 
+      {/* ✅ Adjust path if needed */}
     </View>
   );
 };
@@ -290,5 +363,43 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#777',
     marginTop: 4,
+  },
+  sidebar: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    width: width * 0.7,
+    backgroundColor: '#fff',
+    zIndex: 10,
+    paddingTop: 50,
+    paddingHorizontal: 20,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 6,
+  },
+  sidebarTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 20,
+  },
+  sidebarItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+  },
+  sidebarText: {
+    fontSize: 16,
+    marginLeft: 12,
+    color: '#000',
+  },
+  overlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    zIndex: 1,
   },
 });

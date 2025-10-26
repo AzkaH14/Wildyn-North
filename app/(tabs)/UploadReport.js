@@ -23,19 +23,53 @@ const UploadReport = () => {
   const [selectedHealth, setSelectedHealth] = useState(null);
   const [location, setLocation] = useState(null);
   const [timestamp, setTimestamp] = useState('');
+  const [locationLoading, setLocationLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert('Permission denied', 'Location permission is required.');
+  const fetchLocation = async () => {
+    setLocationLoading(true);
+    try {
+      // Check if location services are enabled
+      const enabled = await Location.hasServicesEnabledAsync();
+      if (!enabled) {
+        Alert.alert('Location Disabled', 'Please enable location services in your device settings.');
+        setLocationLoading(false);
         return;
       }
 
-      const loc = await Location.getCurrentPositionAsync({});
+      // Request permissions
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permission denied',
+          'Location permission is required to record wildlife sightings. Please enable it in settings.',
+          [{ text: 'OK' }]
+        );
+        setLocationLoading(false);
+        return;
+      }
+
+      // Get current location with high accuracy
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+        timeout: 15000,
+      });
+      
       setLocation(loc.coords);
       setTimestamp(new Date().toLocaleString());
-    })();
+      console.log('Location captured:', loc.coords);
+    } catch (error) {
+      console.error('Location error:', error);
+      Alert.alert(
+        'Location Error', 
+        'Unable to fetch location. Please ensure location services are enabled and try again.'
+      );
+    } finally {
+      setLocationLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLocation();
   }, []);
 
   const pickImage = async () => {
@@ -162,15 +196,36 @@ const UploadReport = () => {
       </View>
 
       {/* Location + Time */}
-      {location && (
-        <View style={styles.section}>
+      <View style={styles.section}>
+        <View style={styles.locationHeader}>
           <Text style={styles.label}>Location & Time</Text>
-          <Text style={styles.infoText}>
-            📍 {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
-          </Text>
-          <Text style={styles.infoText}>🕒 {timestamp}</Text>
+          <TouchableOpacity 
+            onPress={fetchLocation} 
+            style={styles.refreshButton}
+            disabled={locationLoading}
+          >
+            <Ionicons 
+              name="refresh" 
+              size={20} 
+              color={locationLoading ? '#ccc' : '#000'} 
+            />
+          </TouchableOpacity>
         </View>
-      )}
+        {locationLoading ? (
+          <Text style={styles.infoText}>📍 Fetching location...</Text>
+        ) : location ? (
+          <>
+            <Text style={styles.infoText}>
+              📍 {location.latitude.toFixed(5)}, {location.longitude.toFixed(5)}
+            </Text>
+            <Text style={styles.infoText}>🕒 {timestamp}</Text>
+          </>
+        ) : (
+          <Text style={[styles.infoText, { color: '#888' }]}>
+            ⚠️ Location unavailable. Please enable location permissions in settings.
+          </Text>
+        )}
+      </View>
 
       {/* Upload Button */}
       <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
@@ -211,6 +266,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
+  },
+  locationHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  refreshButton: {
+    padding: 5,
   },
   imageOptions: {
     flexDirection: 'row',
