@@ -47,7 +47,32 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Existing screens if you still need them */}
+      {/* ✅ Wildlife Library Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="WildlifeLibrary"
+        options={{
+          href: null,
+          title: 'Wildlife Library',
+        }}
+      />
+
+      {/* ✅ Reports Feed Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="ReportsFeed"
+        options={{
+          href: null,
+          title: 'Reports Feed',
+        }}
+      />
+
+      {/* ✅ User Profile Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="UserProfile"
+        options={{
+          href: null,
+          title: 'User Profile',
+        }}
+      />
       
     
     </Tabs>

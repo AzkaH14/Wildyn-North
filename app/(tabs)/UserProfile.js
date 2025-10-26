@@ -272,7 +272,7 @@ const UserProfile = () => {
               style={styles.editButton}
               onPress={() => setIsEditMode(true)}
             >
-              <Ionicons name="create-outline" size={20} color="#fff" />
+              <Ionicons name="create-outline" size={20} color="#black" />
               <Text style={styles.editButtonText}>Edit Profile</Text>
             </TouchableOpacity>
           </View>
@@ -364,7 +364,7 @@ const UserProfile = () => {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <>
-                    <Ionicons name="checkmark" size={20} color="#fff" />
+                    <Ionicons name="checkmark" size={20} color="black" />
                     <Text style={styles.updateButtonText}>Update Data</Text>
                   </>
                 )}
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#ccc',
   },
   updateButtonText: {
-    color: '#fff',
+    color: 'black',
     fontSize: 16,
     fontWeight: '700',
     marginLeft: 8,

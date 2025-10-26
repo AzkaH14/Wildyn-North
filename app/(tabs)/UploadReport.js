@@ -25,59 +25,67 @@ const UploadReport = () => {
   const [timestamp, setTimestamp] = useState('');
   const [locationLoading, setLocationLoading] = useState(true);
 
-  const fetchLocation = async () => {
-    setLocationLoading(true);
-    try {
-      // Check if location services are enabled
-      const enabled = await Location.hasServicesEnabledAsync();
-      if (!enabled) {
-        Alert.alert('Location Disabled', 'Please enable location services in your device settings.');
-        setLocationLoading(false);
-        return;
-      }
-
-      // Request permissions
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permission denied',
-          'Location permission is required to record wildlife sightings. Please enable it in settings.',
-          [{ text: 'OK' }]
-        );
-        setLocationLoading(false);
-        return;
-      }
-
-      // Get current location with high accuracy
-      const loc = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.High,
-        timeout: 15000,
-      });
-      
-      setLocation(loc.coords);
-      setTimestamp(new Date().toLocaleString());
-      console.log('Location captured:', loc.coords);
-    } catch (error) {
-      console.error('Location error:', error);
-      Alert.alert(
-        'Location Error', 
-        'Unable to fetch location. Please ensure location services are enabled and try again.'
-      );
-    } finally {
-      setLocationLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchLocation = async () => {
+      setLocationLoading(true);
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          Alert.alert('Permission denied', 'Location permission is required.');
+          setLocationLoading(false);
+          return;
+        }
+
+        const loc = await Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.High,
+        });
+        setLocation(loc.coords);
+        setTimestamp(new Date().toLocaleString());
+        console.log('Location captured:', loc.coords);
+      } catch (error) {
+        console.error('Location error:', error);
+        Alert.alert('Location Error', 'Unable to fetch location.');
+      } finally {
+        setLocationLoading(false);
+      }
+    };
+    
     fetchLocation();
   }, []);
 
+  // ✅ Check clarity & dimensions
+  const checkImageQuality = (imageAsset) => {
+    const { width, height, fileSize } = imageAsset;
+    console.log(`Dimensions: ${width}x${height}, Size: ${fileSize || 'unknown'}`);
+
+    // Minimum acceptable dimensions and approximate size
+    if (width < 300 || height < 300) {
+      Alert.alert('Low Resolution', 'Please choose a clearer image (at least 300x300).');
+      return false;
+    }
+
+    // If available, check file size (in bytes)
+    if (fileSize && fileSize < 40000) {
+      Alert.alert('Low Quality', 'Please select a higher quality image.');
+      return false;
+    }
+
+    return true;
+  };
+
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
     });
-    if (!result.canceled) setImage(result.assets[0].uri);
+    if (!result.canceled) {
+      const selected = result.assets[0];
+      if (checkImageQuality(selected)) {
+        setImage(selected.uri);
+        Alert.alert('✅ Image Accepted', 'Image is clear and ready to upload!');
+      }
+    }
   };
 
   const pickFromCamera = async () => {
@@ -86,11 +94,20 @@ const UploadReport = () => {
       Alert.alert('Camera Permission', 'Please enable camera permission in settings.');
       return;
     }
+
     const result = await ImagePicker.launchCameraAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      quality: 0.8,
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 1,
     });
-    if (!result.canceled) setImage(result.assets[0].uri);
+
+    if (!result.canceled) {
+      const selected = result.assets[0];
+      if (checkImageQuality(selected)) {
+        setImage(selected.uri);
+        Alert.alert('✅ Image Accepted', 'Image is clear and ready to upload!');
+      }
+    }
   };
 
   const identifySpecie = async () => {
@@ -101,7 +118,7 @@ const UploadReport = () => {
     setSpecieName('Identified Specie Name');
   };
 
-  const handleUpload = () => {
+  const handleUpload = async () => {
     if (!image || !specieName || !selectedHealth) {
       Alert.alert('Incomplete', 'Please fill all required fields.');
       return;
@@ -119,11 +136,28 @@ const UploadReport = () => {
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Upload',
-        onPress: () => {
-          router.push({
-            pathname: '/ReportsFeed',
-            params: { data: JSON.stringify(reportData) },
-          });
+        onPress: async () => {
+          try {
+            const API_URL = 'http://192.168.100.59:5000'; // your computer's IP
+            const response = await fetch(`${API_URL}/api/reports`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(reportData),
+            });
+
+            const result = await response.json();
+
+            if (response.ok) {
+              Alert.alert('Success', 'Report uploaded successfully!', [
+                { text: 'OK', onPress: () => router.push('/(tabs)/ReportsFeed') },
+              ]);
+            } else {
+              Alert.alert('Error', 'Failed to upload report. Please try again.');
+            }
+          } catch (error) {
+            console.error('Upload error:', error);
+            Alert.alert('Connection Error', 'Could not connect to server. Check your connection.');
+          }
         },
       },
     ]);
@@ -197,22 +231,9 @@ const UploadReport = () => {
 
       {/* Location + Time */}
       <View style={styles.section}>
-        <View style={styles.locationHeader}>
-          <Text style={styles.label}>Location & Time</Text>
-          <TouchableOpacity 
-            onPress={fetchLocation} 
-            style={styles.refreshButton}
-            disabled={locationLoading}
-          >
-            <Ionicons 
-              name="refresh" 
-              size={20} 
-              color={locationLoading ? '#ccc' : '#000'} 
-            />
-          </TouchableOpacity>
-        </View>
+        <Text style={styles.label}>Location & Time</Text>
         {locationLoading ? (
-          <Text style={styles.infoText}>📍 Fetching location...</Text>
+          <Text style={styles.infoText}>Fetching location...</Text>
         ) : location ? (
           <>
             <Text style={styles.infoText}>
@@ -221,9 +242,7 @@ const UploadReport = () => {
             <Text style={styles.infoText}>🕒 {timestamp}</Text>
           </>
         ) : (
-          <Text style={[styles.infoText, { color: '#888' }]}>
-            ⚠️ Location unavailable. Please enable location permissions in settings.
-          </Text>
+          <Text style={styles.infoText}>Location unavailable</Text>
         )}
       </View>
 
@@ -237,12 +256,9 @@ const UploadReport = () => {
 
 export default UploadReport;
 
-// ✅ Add styles here
+// ✅ Styles
 const styles = StyleSheet.create({
-  container: {
-    paddingBottom: 40,
-    backgroundColor: '#f2f2f2',
-  },
+  container: { paddingBottom: 40, backgroundColor: '#f2f2f2' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -251,10 +267,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     elevation: 3,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
+  headerTitle: { fontSize: 18, fontWeight: '700' },
   section: {
     backgroundColor: '#fff',
     padding: 15,
@@ -262,42 +275,17 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     elevation: 1,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  locationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  refreshButton: {
-    padding: 5,
-  },
-  imageOptions: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  optionButton: {
-    alignItems: 'center',
-    padding: 10,
-    flex: 1,
-  },
-  optionText: {
-    marginTop: 4,
-    fontSize: 14,
-  },
+  label: { fontSize: 16, fontWeight: '600', marginBottom: 8 },
+  imageOptions: { flexDirection: 'row', justifyContent: 'space-between' },
+  optionButton: { alignItems: 'center', padding: 10, flex: 1 },
+  optionText: { marginTop: 4, fontSize: 14 },
   previewImage: {
     width: '100%',
     height: 200,
     marginTop: 10,
     borderRadius: 10,
   },
-  specieRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  specieRow: { flexDirection: 'row', alignItems: 'center' },
   input: {
     flex: 1,
     borderWidth: 1,
@@ -314,18 +302,12 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 8,
   },
-  aiText: {
-    marginLeft: 5,
-    fontWeight: '600',
-  },
-  radioContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-  },
+  aiText: { marginLeft: 5, fontWeight: '600' },
+  radioContainer: { flexDirection: 'row', flexWrap: 'wrap' },
   radioOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '50%', // 2 on top, 2 below
+    width: '50%',
     marginVertical: 4,
   },
   radioCircle: {
@@ -336,17 +318,9 @@ const styles = StyleSheet.create({
     borderColor: '#8f8d8dff',
     marginRight: 8,
   },
-  radioSelected: {
-    backgroundColor: '#a7a7a7ff',
-    borderColor: '#555',
-  },
-  radioLabel: {
-    fontSize: 14,
-  },
-  infoText: {
-    fontSize: 14,
-    marginTop: 4,
-  },
+  radioSelected: { backgroundColor: '#a7a7a7ff', borderColor: '#555' },
+  radioLabel: { fontSize: 14 },
+  infoText: { fontSize: 14, marginTop: 4 },
   uploadButton: {
     backgroundColor: '#FFD700',
     padding: 15,
@@ -354,8 +328,5 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
-  uploadButtonText: {
-    fontWeight: '700',
-    fontSize: 16,
-  },
+  uploadButtonText: { fontWeight: '700', fontSize: 16 },
 });

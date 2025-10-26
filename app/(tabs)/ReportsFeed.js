@@ -14,6 +14,7 @@ import {
   Easing,
   Dimensions,
   TouchableWithoutFeedback,
+  RefreshControl,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -24,26 +25,36 @@ const offensiveWords = ['badword', 'offensive', 'ugly'];
 
 const ReportFeed = () => {
   const router = useRouter();
-  const { data } = useLocalSearchParams();
-  const parsed = useMemo(() => (data ? JSON.parse(data) : null), [data]); // ✅ useMemo added
-
   const [reportsList, setReportsList] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // ✅ Fixed useEffect (runs only once, no infinite loop)
+  // Fetch reports from backend
   useEffect(() => {
-    if (parsed) {
-      const newReports = Array.isArray(parsed) ? parsed : [parsed];
-      setReportsList((prev) => {
-        const existingIds = prev.map((r) => r.id || r.timestamp);
-        const uniqueReports = newReports.filter(
-          (r) => !existingIds.includes(r.id || r.timestamp)
-        );
-        return [...uniqueReports, ...prev];
-      });
-    }
-    // ✅ run only once when screen mounts
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    fetchReports();
   }, []);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      // TODO: Replace with your actual backend URL
+      // For development: http://localhost:5000
+      // For testing on device: http://YOUR_COMPUTER_IP:5000
+      const API_URL = 'http://192.168.100.59:5000'; // Replace with your computer's IP
+      
+      const response = await fetch(`${API_URL}/api/reports`);
+      const data = await response.json();
+      
+      if (response.ok) {
+        setReportsList(data);
+      } else {
+        console.error('Failed to fetch reports');
+      }
+    } catch (error) {
+      console.error('Error fetching reports:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
@@ -96,12 +107,21 @@ const ReportFeed = () => {
     );
   }, [reportsList, searchText]);
 
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <Text>Loading reports...</Text>
+        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} />
+      </View>
+    );
+  }
+
   if (!reportsList.length) {
     return (
       <View style={styles.centered}>
-        <Text>No report data found.</Text>
-        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} /> 
-        {/* ✅ Adjust path if your HomeScreen is in another folder */}
+        <Text>No reports found.</Text>
+        <Text style={{ marginTop: 10, color: '#888' }}>Upload a report to get started!</Text>
+        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} />
       </View>
     );
   }
@@ -161,7 +181,13 @@ const ReportFeed = () => {
       >
         <FlatList
           data={filteredReports}
-          keyExtractor={(item) => item.id?.toString() || Math.random().toString()}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchReports} />
+          }
+          keyExtractor={(item, index) => {
+            // MongoDB returns _id, but also check for other possible id fields
+            return item._id?.toString() || item.id?.toString() || index.toString();
+          }}
           renderItem={({ item }) => (
             <View>
               <View style={styles.userInfo}>
@@ -170,17 +196,17 @@ const ReportFeed = () => {
                   style={styles.profilePic}
                 />
                 <View style={styles.userText}>
-                  <Text style={styles.username}>Username</Text>
+                  <Text style={styles.username}>{item.username || 'Unknown User'}</Text>
                   {item.location && (
                     <Text style={styles.location}>
-                      {item.location.latitude.toFixed(5)}, {item.location.longitude.toFixed(5)}
+                      📍 {item.location.latitude.toFixed(5)}, {item.location.longitude.toFixed(5)}
                     </Text>
                   )}
-                  <Text style={styles.time}>{item.timestamp}</Text>
+                  <Text style={styles.time}>🕒 {item.timestamp}</Text>
                 </View>
               </View>
 
-              <Image source={{ uri: item.image }} style={styles.image} />
+              {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
 
               <View style={styles.caption}>
                 <Text style={styles.captionText}>
