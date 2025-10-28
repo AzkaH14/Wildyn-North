@@ -153,7 +153,7 @@ const HomeScreen = () => {
             <Text style={styles.cardText}>View map</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.reportCard} onPress={() => console.log('View Reports')}>
+          <TouchableOpacity style={styles.reportCard} onPress={() => router.push("/(tabs)/ReportsFeed")}>
             <View style={[styles.cardImage, { justifyContent: 'center', alignItems: 'center' }]}>
               <MaterialCommunityIcons name="file-document-outline" size={80} color="#524b4bff" />
             </View>
@@ -163,17 +163,23 @@ const HomeScreen = () => {
 
         {/* --- Analytics Section --- */}
         <View style={styles.analyticsSection}>
-          <Text style={styles.analyticsTitle}>Analytics</Text>
-          <View style={styles.analyticsRow}>
-            <Text style={styles.analyticsLabel}>Total Reports</Text>
-            <Text style={styles.analyticsCount}>0</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.viewReportsButton}
-            onPress={() => console.log('View my reports')}>
-            <Text style={styles.viewReportsButtonText}>View my reports</Text>
-          </TouchableOpacity>
-        </View>
+  <Text style={styles.analyticsTitle}>Analytics</Text>
+
+  <View style={styles.analyticsRow}>
+    <Text style={styles.analyticsLabel}>Total Reports</Text>
+    <Text style={styles.analyticsCount}>0</Text>
+  </View>
+
+  <View style={styles.buttonWrapper}>
+    <TouchableOpacity
+      style={styles.viewReportsButton}
+      onPress={() => router.push("/(tabs)/ReportsHistory")}
+    >
+      <Ionicons name="document-text-outline" size={20} color="black" />
+      <Text style={styles.viewReportsButtonText}>View My Reports</Text>
+    </TouchableOpacity>
+  </View>
+</View>
       </ScrollView>
 
       {/* --- Bottom Navigation Bar --- */}
@@ -200,9 +206,9 @@ const HomeScreen = () => {
           <Text style={styles.sidebarText}>Logout</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('My Reports')}>
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => router.push("/(tabs)/ReportsHistory")}        >
           <Ionicons name="document-text-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>My Reports</Text>
+          <Text style={styles.sidebarText}>Reports history</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('Support')}>
@@ -296,15 +302,30 @@ const styles = StyleSheet.create({
   analyticsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   analyticsLabel: { fontSize: 16, color: '#555' },
   analyticsCount: { fontSize: 20, fontWeight: '600', color: '#333' },
-  viewReportsButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 12,
-    borderRadius: 6,
-    width: '50%',
-    alignSelf: 'flex-end',
-    marginTop: 20,
+
+  buttonWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 5,
   },
-  viewReportsButtonText: { fontSize: 16, fontWeight: '700', color: '#000', textAlign: 'center' },
+
+  viewReportsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFD700',
+    padding: 15,
+    margin: 15,
+    borderRadius: 10,
+    width: '100%',
+  },
+  
+  viewReportsButtonText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
 
   bottomNav: {
     flexDirection: 'row',

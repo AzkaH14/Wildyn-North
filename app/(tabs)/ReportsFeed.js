@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from "react";
+
 import {
   View,
   Text,
@@ -7,28 +8,25 @@ import {
   TextInput,
   TouchableOpacity,
   FlatList,
-  Alert,
   KeyboardAvoidingView,
   Platform,
-  Animated,
-  Easing,
-  Dimensions,
-  TouchableWithoutFeedback,
   RefreshControl,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Ionicons } from '@expo/vector-icons';
-import BottomNav from '../../components/BottomNav';
+} from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
+import BottomNav from "../../components/BottomNav";
 
-const { width } = Dimensions.get('window');
-const offensiveWords = ['badword', 'offensive', 'ugly'];
+const API_URL = "http://192.168.100.59:5000"; // your backend URL
 
-const ReportFeed = () => {
+const offensiveWords = ["badword", "ugly", "offensive"];
+
+const ReportsFeed = () => {
   const router = useRouter();
-  const [reportsList, setReportsList] = useState([]);
+  const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
 
-  // Fetch reports from backend
   useEffect(() => {
     fetchReports();
   }, []);
@@ -36,136 +34,79 @@ const ReportFeed = () => {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      // TODO: Replace with your actual backend URL
-      // For development: http://localhost:5000
-      // For testing on device: http://YOUR_COMPUTER_IP:5000
-      const API_URL = 'http://172.21.245.212:5000'; // Replace with your computer's IP
-      
-      const response = await fetch(`${API_URL}/api/reports`);
-      const data = await response.json();
-      
-      if (response.ok) {
-        setReportsList(data);
-      } else {
-        console.error('Failed to fetch reports');
+      const res = await fetch(`${API_URL}/api/reports`);
+      const data = await res.json();
+      if (res.ok) {
+        setReports(
+          data.map((r) => ({
+            ...r,
+            comments: r.comments || [],
+            pinnedComment: r.pinnedComment || null,
+            newComment: "",
+          }))
+        );
       }
-    } catch (error) {
-      console.error('Error fetching reports:', error);
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [searchText, setSearchText] = useState('');
+  const handleAddComment = async (reportId) => {
+    const updated = [...reports];
+    const report = updated.find((r) => r._id === reportId);
+    const commentText = report.newComment.trim();
+    if (!commentText) return;
 
-  // ✅ Sidebar animation
-  const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    Animated.timing(slideAnim, {
-      toValue: sidebarOpen ? -width * 0.7 : 0,
-      duration: 250,
-      easing: Easing.ease,
-      useNativeDriver: false,
-    }).start();
-    setSidebarOpen(!sidebarOpen);
-  };
-
-  const handleLogout = () => {
-    console.log('Logout clicked');
-    toggleSidebar();
-  };
-
-  const handleAddComment = () => {
-    const lower = newComment.toLowerCase();
-    const found = offensiveWords.some((word) => lower.includes(word));
-    if (found) {
-      Alert.alert('Comment Rejected', 'Your comment contains offensive language.');
+    const isOffensive = offensiveWords.some((w) =>
+      commentText.toLowerCase().includes(w)
+    );
+    if (isOffensive) {
+      alert("Your comment contains inappropriate words.");
       return;
     }
-    if (newComment.trim() === '') return;
 
-    const commentObj = {
+    const newComment = {
       id: Date.now().toString(),
-      text: newComment,
-      user: 'Community User',
+      text: commentText,
+      user: "Community User",
       time: new Date().toLocaleString(),
     };
 
-    setComments([commentObj, ...comments]);
-    setNewComment('');
+    report.comments.unshift(newComment);
+    report.newComment = "";
+    setReports(updated);
+
+    try {
+      await fetch(`${API_URL}/api/reports/${reportId}/comment`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(newComment),
+      });
+    } catch (err) {
+      console.error("Failed to post comment:", err);
+    }
   };
 
-  const filteredReports = useMemo(() => {
-    if (!reportsList.length) return [];
-    if (!searchText.trim()) return reportsList;
-    return reportsList.filter((r) =>
-      r.specieName?.toLowerCase().includes(searchText.toLowerCase())
+  const filtered = useMemo(() => {
+    if (!searchText.trim()) return reports;
+    return reports.filter((r) =>
+      r.specieName.toLowerCase().includes(searchText.toLowerCase())
     );
-  }, [reportsList, searchText]);
-
-  if (loading) {
-    return (
-      <View style={styles.centered}>
-        <Text>Loading reports...</Text>
-        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} />
-      </View>
-    );
-  }
-
-  if (!reportsList.length) {
-    return (
-      <View style={styles.centered}>
-        <Text>No reports found.</Text>
-        <Text style={{ marginTop: 10, color: '#888' }}>Upload a report to get started!</Text>
-        <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} />
-      </View>
-    );
-  }
+  }, [searchText, reports]);
 
   return (
-    <View style={styles.wrapper}>
-      {/* ✅ Top bar */}
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.topBar}>
-        <TouchableOpacity onPress={toggleSidebar}>
-          <Ionicons name="menu-outline" size={28} color="#000" />
+        <Text style={styles.topTitle}>Community Reports</Text>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/ReportsHistory")}>
+          <Ionicons name="document-text-outline" size={22} color="#000" />
         </TouchableOpacity>
-        <Text style={styles.topTitle}>Reports</Text>
-        <View style={{ width: 28 }} />
       </View>
 
-      {/* ✅ Sidebar Overlay */}
-      {sidebarOpen && (
-        <TouchableWithoutFeedback onPress={toggleSidebar}>
-          <View style={styles.overlay} />
-        </TouchableWithoutFeedback>
-      )}
-
-      {/* ✅ Sidebar sliding menu */}
-      <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
-        <Text style={styles.sidebarTitle}>Menu</Text>
-        <TouchableOpacity style={styles.sidebarItem} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>Logout</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => router.push('/(tabs)/ReportsFeed')}>
-          <Ionicons name="document-text-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>My Reports</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('Support')}>
-          <Ionicons name="help-circle-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>Support</Text>
-        </TouchableOpacity>
-      </Animated.View>
-
-      {/* ✅ Search bar */}
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={20} color="#666" />
+        <Ionicons name="search-outline" size={18} color="#555" />
         <TextInput
           style={styles.searchInput}
           placeholder="Search animal species..."
@@ -174,258 +115,187 @@ const ReportFeed = () => {
         />
       </View>
 
-      {/* ✅ Feed section */}
       <KeyboardAvoidingView
         style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <FlatList
-          data={filteredReports}
+          data={filtered}
+          keyExtractor={(item) => item._id}
           refreshControl={
             <RefreshControl refreshing={loading} onRefresh={fetchReports} />
           }
-          keyExtractor={(item, index) => {
-            // MongoDB returns _id, but also check for other possible id fields
-            return item._id?.toString() || item.id?.toString() || index.toString();
-          }}
           renderItem={({ item }) => (
-            <View>
-              <View style={styles.userInfo}>
+            <View style={styles.card}>
+              <View style={styles.header}>
                 <Image
-                  source={{ uri: 'https://cdn-icons-png.flaticon.com/512/149/149071.png' }}
-                  style={styles.profilePic}
+                  source={{
+                    uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+                  }}
+                  style={styles.profile}
                 />
-                <View style={styles.userText}>
-                  <Text style={styles.username}>{item.username || 'Unknown User'}</Text>
+                <View>
+                  <Text style={styles.username}>{item.username}</Text>
+
                   {item.location && (
-                    <Text style={styles.location}>
-                      📍 {item.location.latitude.toFixed(5)}, {item.location.longitude.toFixed(5)}
-                    </Text>
-                  )}
-                  <Text style={styles.time}>🕒 {item.timestamp}</Text>
+    <View style={styles.locationRow}>
+      <Ionicons name="location-outline" size={14} color="#777" style={{ marginRight: 3 }} />
+      <Text style={styles.location}>
+        {item.location.address
+          ? item.location.address
+          : `${item.location.latitude?.toFixed(3)}, ${item.location.longitude?.toFixed(3)}`}
+
+      </Text>
+
+    </View>
+  )}
+
+                  <Text style={styles.timestamp}>{item.timestamp}</Text>
                 </View>
               </View>
 
-              {item.image && <Image source={{ uri: item.image }} style={styles.image} />}
+              {item.image && (
+                <Image source={{ uri: item.image }} style={styles.image} />
+              )}
+              <Text style={styles.caption}>
+                <Text style={{ fontWeight: "700" }}>{item.specieName}</Text> •{" "}
+                {item.healthStatus}
+              </Text>
 
-              <View style={styles.caption}>
-                <Text style={styles.captionText}>
-                  <Text style={styles.bold}>{item.specieName}</Text> • {item.healthStatus}
-                </Text>
-              </View>
-            </View>
-          )}
-          ListFooterComponent={
-            <>
               <Text style={styles.commentTitle}>Comments</Text>
-              <View style={styles.commentBox}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Write a comment..."
-                  value={newComment}
-                  onChangeText={setNewComment}
-                />
-                <TouchableOpacity onPress={handleAddComment} style={styles.sendButton}>
-                  <Ionicons name="send" size={20} color="#fff" />
-                </TouchableOpacity>
-              </View>
-              {comments.map((item) => (
-                <View style={styles.commentItem} key={item.id}>
-                  <Ionicons name="person-circle-outline" size={28} color="#555" />
-                  <View style={styles.commentContent}>
-                    <Text style={styles.commentUser}>{item.user}</Text>
-                    <Text style={styles.commentText}>{item.text}</Text>
-                    <Text style={styles.commentTime}>{item.time}</Text>
+              <View style={styles.commentInputBox}>
+  <TextInput
+    style={styles.commentInput}
+    placeholder="Write a comment..."
+    value={item.newComment}
+    onChangeText={(t) => {
+      const newList = reports.map((r) =>
+        r._id === item._id ? { ...r, newComment: t } : r
+      );
+      setReports(newList);
+    }}
+  />
+  <TouchableOpacity
+    onPress={() => handleAddComment(item._id)}
+    style={styles.sendBtn}
+  >
+    <Ionicons name="send" size={18} color="#fff" />
+  </TouchableOpacity>
+</View>
+
+
+              {item.pinnedComment && (
+                <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}>
+                  <Ionicons name="star" size={18} color="gold" />
+                  <View style={{ marginLeft: 8 }}>
+                    <Text style={styles.commentUser}>
+                      {item.pinnedComment.user} (Pinned)
+                    </Text>
+                    <Text style={styles.commentText}>
+                      {item.pinnedComment.text}
+                    </Text>
                   </View>
                 </View>
-              ))}
-            </>
-          }
+              )}
+
+              {item.comments
+                .filter((c) => c.id !== item.pinnedComment?.id)
+                .map((c) => (
+                  <View key={c.id} style={styles.commentItem}>
+                    <Ionicons name="person-circle-outline" size={24} color="#555" />
+                    <View style={{ marginLeft: 8 }}>
+                      <Text style={styles.commentUser}>{c.user}</Text>
+                      <Text style={styles.commentText}>{c.text}</Text>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          )}
           contentContainerStyle={{ paddingBottom: 70 }}
         />
       </KeyboardAvoidingView>
 
-      {/* ✅ Bottom navigation (Home navigates properly) */}
-      <BottomNav onHomePress={() => router.push('/(tabs)/HomeScreen')} /> 
-      {/* ✅ Adjust path if needed */}
-    </View>
+      <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
+      </SafeAreaView>
   );
 };
 
-export default ReportFeed;
+export default ReportsFeed;
 
 const styles = StyleSheet.create({
-  wrapper: {
-    flex: 1,
-    backgroundColor: '#f9f9f9',
-  },
-  container: {
-    flex: 1,
-  },
-  centered: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
+  wrapper: { flex: 1, backgroundColor: "#f9f9f9" },
+  container: { flex: 1 },
   topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 12,
     borderBottomWidth: 1,
-    borderColor: '#eee',
+    borderColor: "#eee",
   },
-  topTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-  },
+  topTitle: { fontSize: 18, fontWeight: "700" },
   searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#eee',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#eee",
     margin: 10,
     paddingHorizontal: 10,
     borderRadius: 25,
   },
-  searchInput: {
-    flex: 1,
-    padding: 8,
-    marginLeft: 5,
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderColor: '#eee',
-  },
-  profilePic: {
-    width: 45,
-    height: 45,
-    borderRadius: 25,
-    marginRight: 10,
-  },
-  userText: {
-    flexDirection: 'column',
-  },
-  username: {
-    fontWeight: '700',
-    fontSize: 16,
-  },
-  location: {
-    fontSize: 13,
-    color: '#888',
-  },
-  time: {
-    fontSize: 12,
-    color: '#888',
-    marginTop: 2,
-  },
-  image: {
-    width: '100%',
-    height: 250,
-    backgroundColor: '#ddd',
-  },
-  caption: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-  },
-  captionText: {
-    fontSize: 15,
-  },
-  bold: {
-    fontWeight: '700',
-  },
-  commentTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginTop: 15,
-    marginHorizontal: 15,
-  },
-  commentBox: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    margin: 15,
-    padding: 10,
-    borderRadius: 25,
-    alignItems: 'center',
-    shadowColor: '#000',
+  searchInput: { flex: 1, padding: 8, marginLeft: 5 },
+  card: {
+    backgroundColor: "#fff",
+    marginBottom: 15,
+    borderRadius: 10,
+    overflow: "hidden",
+    shadowColor: "#000",
     shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowRadius: 5,
     elevation: 2,
   },
-  input: {
-    flex: 1,
-    paddingHorizontal: 10,
+  header: { flexDirection: "row", alignItems: "center", padding: 10 },
+  profile: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  username: { fontWeight: "700" },
+  location: { fontSize: 12, color: "#777" },
+  locationRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
+  timestamp: { fontSize: 12, color: "#777" },
+  image: { width: "100%", height: 500 },
+  caption: { paddingHorizontal: 12, paddingVertical: 8 },
+  commentTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginHorizontal: 12,
+    marginTop: 6,
   },
-  sendButton: {
-    backgroundColor: '#000',
-    padding: 8,
+  commentInputBox: {
+    flexDirection: "row",
+    backgroundColor: "#f1f1f1",
+    margin: 10,
+    borderRadius: 25,
+    paddingHorizontal: 10,
+    alignItems: "center",
+  },
+  commentInput: { flex: 1, padding: 8 },
+  sendBtn: {
+    backgroundColor: "#000",
+    padding: 12,
     borderRadius: 20,
   },
   commentItem: {
-    flexDirection: 'row',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderColor: '#eee',
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: "#eee",
   },
-  commentContent: {
-    marginLeft: 10,
-    flex: 1,
-  },
-  commentUser: {
-    fontWeight: '700',
-  },
-  commentText: {
-    fontSize: 14,
-    marginTop: 2,
-  },
-  commentTime: {
-    fontSize: 11,
-    color: '#777',
-    marginTop: 4,
-  },
-  sidebar: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    width: width * 0.7,
-    backgroundColor: '#fff',
-    zIndex: 10,
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-  },
-  sidebarTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  sidebarItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  sidebarText: {
-    fontSize: 16,
-    marginLeft: 12,
-    color: '#000',
-  },
-  overlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    zIndex: 1,
+  commentUser: { fontWeight: "700" },
+  commentText: { color: "#333", marginTop: 2 },
+
+  sendBtn: {
+    backgroundColor: "#000",
+    padding: 12,
+    borderRadius: 20,
+    size:10,
   },
 });

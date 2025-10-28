@@ -74,7 +74,15 @@ export default function TabLayout() {
         }}
       />
       
-    
+      {/* ✅ Reports History Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="ReportsHistory"
+        options={{
+          href: null,
+          title: 'Reports History',
+        }}
+      />
+      
     </Tabs>
   );
 }
