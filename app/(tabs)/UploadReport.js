@@ -138,7 +138,7 @@ const UploadReport = () => {
         text: 'Upload',
         onPress: async () => {
           try {
-            const API_URL = 'http://192.168.100.59:5000'; // your computer's IP
+            const API_URL = 'http://172.21.245.212:5000'; // your computer's IP
             const response = await fetch(`${API_URL}/api/reports`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

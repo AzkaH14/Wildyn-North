@@ -39,7 +39,7 @@ const ReportFeed = () => {
       // TODO: Replace with your actual backend URL
       // For development: http://localhost:5000
       // For testing on device: http://YOUR_COMPUTER_IP:5000
-      const API_URL = 'http://192.168.100.59:5000'; // Replace with your computer's IP
+      const API_URL = 'http://172.21.245.212:5000'; // Replace with your computer's IP
       
       const response = await fetch(`${API_URL}/api/reports`);
       const data = await response.json();
