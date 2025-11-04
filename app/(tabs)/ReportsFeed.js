@@ -14,10 +14,11 @@ import {
 } from "react-native";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../../components/BottomNav";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = "http://192.168.100.59:5000"; // your backend URL
+const API_URL = 'http://172.21.247.100:5000'; // backend URL
 
 const offensiveWords = ["badword", "ugly", "offensive"];
 
@@ -26,28 +27,62 @@ const ReportsFeed = () => {
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
+  const [error, setError] = useState(null);
 
+  // Fetch reports on component mount
   useEffect(() => {
     fetchReports();
   }, []);
 
+  // Refresh reports when screen comes into focus (e.g., when navigating back from homepage)
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchReports();
+    }, [])
+  );
+
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API_URL}/api/reports`);
+      setError(null);
+      console.log(`📡 Fetching reports from: ${API_URL}/api/reports`);
+      
+      const res = await fetch(`${API_URL}/api/reports`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      console.log(`📥 Response status: ${res.status} ${res.statusText}`);
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to fetch reports: ${res.status}`);
+      }
+      
       const data = await res.json();
-      if (res.ok) {
-        setReports(
-          data.map((r) => ({
-            ...r,
-            comments: r.comments || [],
-            pinnedComment: r.pinnedComment || null,
-            newComment: "",
-          }))
-        );
+      console.log(`✅ Received ${Array.isArray(data) ? data.length : 0} reports from database`);
+      
+      // Ensure data is an array
+      if (Array.isArray(data)) {
+        const mappedReports = data.map((r) => ({
+          ...r,
+          comments: r.comments || [],
+          pinnedComment: r.pinnedComment || null,
+          newComment: "",
+        }));
+        
+        console.log(`📋 Displaying ${mappedReports.length} reports`);
+        setReports(mappedReports);
+      } else {
+        console.warn('⚠️ Expected array but got:', typeof data, data);
+        setReports([]);
       }
     } catch (err) {
-      console.error(err);
+      console.error('❌ Error fetching reports:', err);
+      setError(err.message || 'Failed to load reports. Please try again.');
+      setReports([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -67,25 +102,72 @@ const ReportsFeed = () => {
       return;
     }
 
-    const newComment = {
+    // Load user info for proper backend schema
+    let userId = 'anonymous';
+    let username = 'Community User';
+    try {
+      const [storedUserId, storedUsername] = await Promise.all([
+        AsyncStorage.getItem('userId'),
+        AsyncStorage.getItem('username'),
+      ]);
+      if (storedUserId) userId = storedUserId;
+      if (storedUsername) username = storedUsername;
+    } catch {}
+
+    // Optimistic UI update
+    const localComment = {
       id: Date.now().toString(),
       text: commentText,
-      user: "Community User",
+      user: username,
       time: new Date().toLocaleString(),
     };
-
-    report.comments.unshift(newComment);
+    report.comments.unshift(localComment);
     report.newComment = "";
     setReports(updated);
+
+    // Send to backend with schema-compliant payload
+    const serverComment = {
+      text: commentText,
+      user: username,
+      userId,
+      timestamp: new Date().toISOString(),
+      pinned: false,
+    };
 
     try {
       await fetch(`${API_URL}/api/reports/${reportId}/comment`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(newComment),
+        body: JSON.stringify(serverComment),
       });
+      // Refresh from server to ensure DB-saved comment (with _id) appears
+      fetchReports();
     } catch (err) {
       console.error("Failed to post comment:", err);
+    }
+  };
+
+  const handlePinComment = async (reportId, comment) => {
+    try {
+      await fetch(`${API_URL}/api/reports/${reportId}/pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment }),
+      });
+      fetchReports();
+    } catch (e) {
+      console.error('Failed to pin comment', e);
+    }
+  };
+
+  const handleUnpinComment = async (reportId) => {
+    try {
+      await fetch(`${API_URL}/api/reports/${reportId}/unpin`, {
+        method: 'POST',
+      });
+      fetchReports();
+    } catch (e) {
+      console.error('Failed to unpin comment', e);
     }
   };
 
@@ -119,13 +201,44 @@ const ReportsFeed = () => {
         style={styles.container}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item._id}
-          refreshControl={
-            <RefreshControl refreshing={loading} onRefresh={fetchReports} />
-          }
-          renderItem={({ item }) => (
+        {loading && reports.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Text style={styles.loadingText}>Loading reports...</Text>
+          </View>
+        ) : error ? (
+          <View style={styles.centerContainer}>
+            <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={fetchReports}
+            >
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.centerContainer}>
+            <Ionicons name="document-outline" size={48} color="#ccc" />
+            <Text style={styles.emptyText}>
+              {searchText.trim() ? 'No reports match your search' : 'No reports yet'}
+            </Text>
+            {searchText.trim() && (
+              <TouchableOpacity
+                onPress={() => setSearchText('')}
+                style={styles.clearSearchButton}
+              >
+                <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        ) : (
+          <FlatList
+            data={filtered}
+            keyExtractor={(item) => item._id}
+            refreshControl={
+              <RefreshControl refreshing={loading && reports.length > 0} onRefresh={fetchReports} />
+            }
+            renderItem={({ item }) => (
             <View style={styles.card}>
               <View style={styles.header}>
                 <Image
@@ -163,6 +276,25 @@ const ReportsFeed = () => {
               </Text>
 
               <Text style={styles.commentTitle}>Comments</Text>
+              {/* Pinned comment at top */}
+              {item.pinnedComment && (
+                <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}>
+                  <Ionicons name="pin" size={18} color="grey" />
+                  <View style={{ marginLeft: 8, flex: 1 }}>
+                    <Text style={styles.commentUser}>
+                      {item.pinnedComment.user} (Pinned)
+                    </Text>
+                    <Text style={styles.commentText}>
+                      {item.pinnedComment.text}
+                    </Text>
+                  </View>
+                  <TouchableOpacity onPress={() => handleUnpinComment(item._id)}>
+                    <Ionicons name="pin" size={20} color="#b45309" />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Add comment input */}
               <View style={styles.commentInputBox}>
   <TextInput
     style={styles.commentInput}
@@ -183,36 +315,31 @@ const ReportsFeed = () => {
   </TouchableOpacity>
 </View>
 
-
-              {item.pinnedComment && (
-                <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}>
-                  <Ionicons name="star" size={18} color="gold" />
-                  <View style={{ marginLeft: 8 }}>
-                    <Text style={styles.commentUser}>
-                      {item.pinnedComment.user} (Pinned)
-                    </Text>
-                    <Text style={styles.commentText}>
-                      {item.pinnedComment.text}
-                    </Text>
-                  </View>
-                </View>
-              )}
-
+              {/* Other comments */}
               {item.comments
-                .filter((c) => c.id !== item.pinnedComment?.id)
+                .filter((c) => {
+                  if (!item.pinnedComment) return true;
+                  const pcId = item.pinnedComment._id || item.pinnedComment.id;
+                  const cId = c._id || c.id;
+                  return cId !== pcId;
+                })
                 .map((c) => (
-                  <View key={c.id} style={styles.commentItem}>
+                  <View key={(c._id || c.id)} style={styles.commentItem}>
                     <Ionicons name="person-circle-outline" size={24} color="#555" />
-                    <View style={{ marginLeft: 8 }}>
+                    <View style={{ marginLeft: 8, flex: 1 }}>
                       <Text style={styles.commentUser}>{c.user}</Text>
                       <Text style={styles.commentText}>{c.text}</Text>
                     </View>
+                    <TouchableOpacity onPress={() => handlePinComment(item._id, c)}>
+                      <Ionicons name="pin-outline" size={20} color="grey" />
+                    </TouchableOpacity>
                   </View>
                 ))}
             </View>
           )}
           contentContainerStyle={{ paddingBottom: 70 }}
         />
+        )}
       </KeyboardAvoidingView>
 
       <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
@@ -223,6 +350,7 @@ const ReportsFeed = () => {
 export default ReportsFeed;
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#f9f9f9' },
   wrapper: { flex: 1, backgroundColor: "#f9f9f9" },
   container: { flex: 1 },
   topBar: {
@@ -230,11 +358,10 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 12,
-    borderBottomWidth: 1,
-    borderColor: "#eee",
+    paddingHorizontal: 15,
+    paddingVertical: 10,
   },
-  topTitle: { fontSize: 18, fontWeight: "700" },
+  topTitle: { fontSize: 20, fontWeight: "600", color: "#000" },
   searchBar: {
     flexDirection: "row",
     alignItems: "center",
@@ -297,5 +424,52 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 20,
     size:10,
+  },
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 10,
+  },
+  errorText: {
+    fontSize: 16,
+    color: '#ff6b6b',
+    textAlign: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
+  retryButton: {
+    backgroundColor: '#000',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyText: {
+    fontSize: 16,
+    color: '#999',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+  clearSearchButton: {
+    marginTop: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+  },
+  clearSearchButtonText: {
+    color: '#000',
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

@@ -7,10 +7,9 @@ const BottomNav = ({ active }) => {
   const router = useRouter();
 
   const navItems = [
-    { icon: 'book', label: 'ResLib', route: '/(tabs)/WildlifeLibrary' },
-    { icon: 'scan-circle-outline', label: 'Specie AI', route: '/(tabs)/SpecieAI' },
+    { icon: 'book', label: 'ResLib', route: '/(tabs)/ResearcherHub' },
     { icon: 'home', label: 'Home', route: '/(tabs)/HomeScreen' },
- 
+    { icon: 'scan-circle-outline', label: 'Specie AI', route: '/(tabs)/UploadReport' },
   ];
 
   const handleNavigation = (route) => {

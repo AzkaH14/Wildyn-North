@@ -9,10 +9,13 @@ import {
   Alert, 
   StyleSheet 
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import BottomNav from '../../components/BottomNav';
 
 const healthOptions = ['Healthy', 'Injured', 'Sick', 'Hungry'];
 
@@ -124,13 +127,18 @@ const UploadReport = () => {
       return;
     }
 
+    // Get user data from AsyncStorage
+    const userId = await AsyncStorage.getItem('userId');
+    const username = await AsyncStorage.getItem('username');
+
     const reportData = {
       image,
       specieName,
       healthStatus: selectedHealth,
       location,
       timestamp,
-      
+      userId: userId || 'anonymous',
+      username: username || 'Anonymous User',
     };
 
     Alert.alert('Confirm Upload', 'Are you sure you want to upload this report?', [
@@ -139,7 +147,7 @@ const UploadReport = () => {
         text: 'Upload',
         onPress: async () => {
           try {
-            const API_URL = 'http://192.168.100.59:5000'; // your computer's IP
+            const API_URL = 'http://172.21.247.100:5000'; // your computer's IP
             const response = await fetch(`${API_URL}/api/reports`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -165,15 +173,17 @@ const UploadReport = () => {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Upload Report</Text>
         <View style={{ width: 24 }} />
       </View>
+
+      <ScrollView contentContainerStyle={styles.container}>
 
       {/* Image Picker Section */}
       <View style={styles.section}>
@@ -251,7 +261,10 @@ const UploadReport = () => {
       <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
         <Text style={styles.uploadButtonText}>Upload Report</Text>
       </TouchableOpacity>
-    </ScrollView>
+      </ScrollView>
+
+      <BottomNav />
+    </SafeAreaView>
   );
 };
 
@@ -259,19 +272,20 @@ export default UploadReport;
 
 // ✅ Styles
 const styles = StyleSheet.create({
-  container: { paddingBottom: 40, backgroundColor: '#f2f2f2' },
+  safeArea: { flex: 1, backgroundColor: '#f2f2f2', },
+  container: { paddingBottom: 80, backgroundColor: '#f2f2f2' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
     backgroundColor: '#fff',
-    elevation: 3,
   },
-  headerTitle: { fontSize: 18, fontWeight: '700' },
+  headerTitle: { fontSize: 20, fontWeight: '600', color: '#000' },
   section: {
     backgroundColor: '#fff',
-    padding: 15,
+    padding: 17,
     margin: 10,
     borderRadius: 10,
     elevation: 1,

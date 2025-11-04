@@ -10,14 +10,16 @@ import {
   Alert,
   RefreshControl,
 } from "react-native";
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import BottomNav from "../../components/BottomNav";
 import { useFocusEffect } from "@react-navigation/native"; // ✅ Works fine in Expo Router too
 import { useCallback } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-const API_URL = "http://192.168.100.59:5000"; // your backend
+const API_URL = "http://172.21.247.100:5000"; // your backend
 
 const ReportsHistory = () => {
   const router = useRouter();
@@ -33,13 +35,42 @@ const ReportsHistory = () => {
   const fetchMyReports = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`${API_URL}/api/myreports`);
+      const userId = await AsyncStorage.getItem('userId');
+      if (!userId) {
+        Alert.alert('Error', 'Please login to view your reports');
+        return;
+      }
+      const response = await fetch(`${API_URL}/api/myreports?userId=${userId}`);
       const data = await response.json();
       if (response.ok) setMyReports(data);
     } catch (error) {
       console.error(error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePinComment = async (reportId, comment) => {
+    try {
+      await fetch(`${API_URL}/api/reports/${reportId}/pin`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ comment }),
+      });
+      fetchMyReports();
+    } catch (e) {
+      console.error('Failed to pin comment', e);
+    }
+  };
+
+  const handleUnpinComment = async (reportId) => {
+    try {
+      await fetch(`${API_URL}/api/reports/${reportId}/unpin`, {
+        method: 'POST',
+      });
+      fetchMyReports();
+    } catch (e) {
+      console.error('Failed to unpin comment', e);
     }
   };
 
@@ -99,40 +130,76 @@ const ReportsHistory = () => {
         <Text style={{ fontWeight: "700" }}>{item.specieName}</Text> •{" "}
         {item.healthStatus}
       </Text>
+
+      {/* Comments Section */}
+      <Text style={styles.commentTitle}>Comments</Text>
+      {item.pinnedComment && (
+        <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}>
+          <Ionicons name="pin" size={18} color="grey" />
+          <View style={{ marginLeft: 8, flex: 1 }}>
+            <Text style={styles.commentUser}>{item.pinnedComment.user} (Pinned)</Text>
+            <Text style={styles.commentText}>{item.pinnedComment.text}</Text>
+          </View>
+          <TouchableOpacity onPress={() => handleUnpinComment(item._id)}>
+            <Ionicons name="pin" size={20} color="#b45309" />
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {(item.comments || [])
+        .filter((c) => (item.pinnedComment ? (c._id || c.id) !== (item.pinnedComment._id || item.pinnedComment.id) : true))
+        .map((c) => (
+          <View key={c._id || c.id} style={styles.commentItem}>
+            <Ionicons name="person-circle-outline" size={24} color="#555" />
+            <View style={{ marginLeft: 8, flex: 1 }}>
+              <Text style={styles.commentUser}>{c.user}</Text>
+              <Text style={styles.commentText}>{c.text}</Text>
+            </View>
+            <TouchableOpacity onPress={() => handlePinComment(item._id, c)}>
+              <Ionicons name="pin-outline" size={20} color="grey" />
+            </TouchableOpacity>
+          </View>
+        ))}
     </View>
   );
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>My Uploaded Reports</Text>
+    <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <View style={styles.container}>
+        <Text style={styles.title}>My Uploaded Reports</Text>
 
-      <FlatList
-        data={myReports}
-        renderItem={renderItem}
-        keyExtractor={(item) => item._id}
-        refreshControl={
-          <RefreshControl refreshing={loading} onRefresh={fetchMyReports} />
-        }
-        ListEmptyComponent={
-          <Text style={styles.empty}>You haven’t uploaded any reports yet.</Text>
-        }
-      />
+        <FlatList
+          data={myReports}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContent}
+          refreshControl={
+            <RefreshControl refreshing={loading} onRefresh={fetchMyReports} />
+          }
+          ListEmptyComponent={
+            <Text style={styles.empty}>You haven't uploaded any reports yet.</Text>
+          }
+        />
 
-      <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
-    </View>
+        <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
+      </View>
+    </SafeAreaView>
   );
 };
 
 export default ReportsHistory;
 
 const styles = StyleSheet.create({
+  safeArea: { flex: 1, backgroundColor: '#f9f9f9' },
   container: { flex: 1, backgroundColor: "#f9f9f9", padding: 10 },
   title: {
     fontSize: 20,
-    fontWeight: "700",
+    fontWeight: "600",
     marginVertical: 10,
     textAlign: "center",
+    color: "#000",
   },
+  listContent: { paddingBottom: 80 },
   card: {
     backgroundColor: "#fff",
     borderRadius: 8,
@@ -155,4 +222,19 @@ const styles = StyleSheet.create({
   },
   caption: { fontSize: 15, color: "#333" },
   empty: { textAlign: "center", color: "#777", marginTop: 40 },
+  commentTitle: {
+    fontSize: 15,
+    fontWeight: "700",
+    marginHorizontal: 12,
+    marginTop: 6,
+  },
+  commentItem: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    padding: 10,
+    borderTopWidth: 1,
+    borderColor: "#eee",
+  },
+  commentUser: { fontWeight: "700" },
+  commentText: { color: "#333", marginTop: 2 },
 });

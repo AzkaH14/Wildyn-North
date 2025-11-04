@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
+const API_URL = 'http://172.21.247.100:5000'; // Update with your backend IP
 
 const UserProfile = () => {
   const router = useRouter();
@@ -26,8 +27,8 @@ const UserProfile = () => {
   // Profile data state
   const [profileData, setProfileData] = useState({
     profileImage: null,
-    username: 'John Doe',
-    email: 'john.doe@example.com',
+    username: '',
+    email: '',
     password: '••••••••',
   });
 
@@ -47,25 +48,68 @@ const UserProfile = () => {
   // Image picker modal state
   const [imagePickerModal, setImagePickerModal] = useState(false);
 
-  // Load profile data from storage on component mount
+  // Load profile data from storage and backend on component mount
   useEffect(() => {
     loadProfileData();
   }, []);
 
-  // Load profile data from AsyncStorage
+  // Load profile data from AsyncStorage and backend
   const loadProfileData = async () => {
     try {
+      const userId = await AsyncStorage.getItem('userId');
       const savedProfileImage = await AsyncStorage.getItem('profileImage');
-      const savedUsername = await AsyncStorage.getItem('username');
-      const savedEmail = await AsyncStorage.getItem('email');
       
-      if (savedProfileImage || savedUsername || savedEmail) {
+      // Load profile image from storage
+      if (savedProfileImage) {
         setProfileData(prev => ({
           ...prev,
-          profileImage: savedProfileImage || prev.profileImage,
-          username: savedUsername || prev.username,
-          email: savedEmail || prev.email,
+          profileImage: savedProfileImage,
         }));
+      }
+
+      // Fetch user data from backend
+      if (userId) {
+        try {
+          const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
+          const result = await response.json();
+
+          if (response.ok && result.user) {
+            setProfileData(prev => ({
+              ...prev,
+              username: result.user.username || prev.username,
+              email: result.user.email || prev.email,
+            }));
+
+            // Update AsyncStorage with latest data
+            await AsyncStorage.setItem('username', result.user.username || '');
+            await AsyncStorage.setItem('userEmail', result.user.email || '');
+          }
+        } catch (apiError) {
+          console.log('Error fetching profile from backend:', apiError);
+          // Fallback to AsyncStorage if backend fails
+          const savedUsername = await AsyncStorage.getItem('username');
+          const savedEmail = await AsyncStorage.getItem('userEmail');
+          
+          if (savedUsername || savedEmail) {
+            setProfileData(prev => ({
+              ...prev,
+              username: savedUsername || prev.username,
+              email: savedEmail || prev.email,
+            }));
+          }
+        }
+      } else {
+        // Fallback to AsyncStorage if no userId
+        const savedUsername = await AsyncStorage.getItem('username');
+        const savedEmail = await AsyncStorage.getItem('userEmail');
+        
+        if (savedUsername || savedEmail) {
+          setProfileData(prev => ({
+            ...prev,
+            username: savedUsername || prev.username,
+            email: savedEmail || prev.email,
+          }));
+        }
       }
     } catch (error) {
       console.log('Error loading profile data:', error);
@@ -185,27 +229,60 @@ const UserProfile = () => {
     setIsLoading(true);
     
     try {
-      // Simulate API call - Replace with Firebase integration later
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const userId = await AsyncStorage.getItem('userId');
       
-      // Save to AsyncStorage
-      await AsyncStorage.setItem('profileImage', editForm.profileImage || '');
-      await AsyncStorage.setItem('username', editForm.username);
-      await AsyncStorage.setItem('email', editForm.email);
-      
-      // Update profile data
-      setProfileData({
-        profileImage: editForm.profileImage || profileData.profileImage,
-        username: editForm.username,
-        email: editForm.email,
-        password: editForm.password ? '••••••••' : profileData.password,
+      if (!userId) {
+        Alert.alert('Error', 'User not logged in. Please login again.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Prepare update data
+      const updateData = {
+        username: editForm.username.trim(),
+        email: editForm.email.trim().toLowerCase(),
+      };
+
+      // Include password only if provided
+      if (editForm.password && editForm.password.trim()) {
+        updateData.password = editForm.password.trim();
+      }
+
+      // Call backend API to update profile
+      const response = await fetch(`${API_URL}/api/auth/profile/${userId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updateData),
       });
-      
-      setIsEditMode(false);
-      Alert.alert('Success', 'Profile updated successfully!');
-      
+
+      const result = await response.json();
+
+      if (response.ok) {
+        // Save to AsyncStorage
+        if (editForm.profileImage) {
+          await AsyncStorage.setItem('profileImage', editForm.profileImage);
+        }
+        await AsyncStorage.setItem('username', result.user.username);
+        await AsyncStorage.setItem('userEmail', result.user.email);
+        
+        // Update profile data
+        setProfileData({
+          profileImage: editForm.profileImage || profileData.profileImage,
+          username: result.user.username,
+          email: result.user.email,
+          password: editForm.password ? '••••••••' : profileData.password,
+        });
+        
+        setIsEditMode(false);
+        Alert.alert('Success', 'Profile updated successfully!');
+      } else {
+        Alert.alert('Error', result.message || 'Failed to update profile. Please try again.');
+      }
     } catch (error) {
-      Alert.alert('Error', 'Failed to update profile. Please try again.');
+      console.error('Update profile error:', error);
+      Alert.alert('Connection Error', 'Could not connect to server. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -227,7 +304,7 @@ const UserProfile = () => {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>User Profile</Text>
