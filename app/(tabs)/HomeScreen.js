@@ -15,35 +15,33 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import BottomNav from '../../components/BottomNav';
+
+const API_URL = 'http://172.21.247.100:5000';
 
 const { width } = Dimensions.get('window');
 
-// ✅ All Facts + Images
+// ✅ All Facts
 const factsData = [
   {
     title: 'Himalayan Brown Bear',
     text: "Himalayan Brown Bear (Deosai National Park) lives up to 20–30 years in the wild, but Pakistan's population is one of the smallest in the world.",
-    image: 'https://via.placeholder.com/300x200/406040/FFFFFF?text=Bear+Silhouette',
   },
   {
     title: 'Himalayan Ibex',
     text: 'Ibex is found at altitudes of about 3,660 to over 5,000 m in summer, descending to about 2,135 m in winter due to snow.',
-    image: 'https://via.placeholder.com/300x200/5B8B7D/FFFFFF?text=Ibex',
   },
   {
     title: 'Markhor Population',
     text: 'The markhor population in Khyber-Pakhtunkhwa has risen to 5,621 individuals. Estimated population ~5,993 individuals per km² in surveyed blocks.',
-    image: 'https://via.placeholder.com/300x200/8B5B5B/FFFFFF?text=Markhor',
   },
   {
     title: 'Grey Wolf',
     text: 'Within Pakistan, there may be only a few hundred grey wolves (Indian + Tibetan subspecies combined), many living in Gilgit-Baltistan and Khyber Pakhtunkhwa.',
-    image: 'https://via.placeholder.com/300x200/555555/FFFFFF?text=Grey+Wolf',
   },
   {
     title: 'Markhor Recovery',
     text: 'Over the past ~30 years, the markhor population in Pakistan has more than doubled from fewer than ~2,500 in the 1990s to 5,000–6,000 in recent estimates.',
-    image: 'https://via.placeholder.com/300x200/7A4F2E/FFFFFF?text=Markhor+Recovery',
   },
 ];
 
@@ -62,6 +60,7 @@ const HomeScreen = () => {
   
   // Profile image state
   const [profileImage, setProfileImage] = useState(null);
+  const [totalReports, setTotalReports] = useState(0);
 
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
@@ -85,21 +84,43 @@ const HomeScreen = () => {
     }
   };
 
+  const loadReportCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/reports`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setTotalReports(data.length);
+    } catch (e) {
+      // fail silently for count
+    }
+  };
+
   // Load profile image on component mount and when screen comes into focus
   useEffect(() => {
     loadProfileImage();
+    loadReportCount();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
       loadProfileImage();
+      loadReportCount();
     }, [])
   );
 
-  const handleLogout = () => {
-    console.log('Logout clicked');
-    toggleSidebar();
-    // Implement your logout logic here
+  const handleLogout = async () => {
+    try {
+      // Clear all user data from AsyncStorage
+      await AsyncStorage.multiRemove(['userId', 'username', 'userEmail', 'isLoggedIn', 'profileImage']);
+      toggleSidebar();
+      // Navigate to Login screen and prevent going back
+      router.replace('/(tabs)/Login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Still navigate to login even if clearing storage fails
+      toggleSidebar();
+      router.replace('/(tabs)/Login');
+    }
   };
 
   return (
@@ -133,7 +154,6 @@ const HomeScreen = () => {
               <Text style={{ fontWeight: 'bold' }}>{dailyFact.title}</Text> {dailyFact.text}
             </Text>
           </View>
-          <Image source={{ uri: dailyFact.image }} style={styles.bearImage} resizeMode="cover" />
         </View>
 
         {/* --- Upload New Report --- */}
@@ -153,7 +173,7 @@ const HomeScreen = () => {
             <Text style={styles.cardText}>View map</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.reportCard} onPress={() => console.log('View Reports')}>
+          <TouchableOpacity style={styles.reportCard} onPress={() => router.push("/(tabs)/ReportsFeed")}>
             <View style={[styles.cardImage, { justifyContent: 'center', alignItems: 'center' }]}>
               <MaterialCommunityIcons name="file-document-outline" size={80} color="#524b4bff" />
             </View>
@@ -163,27 +183,27 @@ const HomeScreen = () => {
 
         {/* --- Analytics Section --- */}
         <View style={styles.analyticsSection}>
-          <Text style={styles.analyticsTitle}>Analytics</Text>
-          <View style={styles.analyticsRow}>
-            <Text style={styles.analyticsLabel}>Total Reports</Text>
-            <Text style={styles.analyticsCount}>0</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.viewReportsButton}
-            onPress={() => console.log('View my reports')}>
-            <Text style={styles.viewReportsButtonText}>View my reports</Text>
-          </TouchableOpacity>
-        </View>
+  <Text style={styles.analyticsTitle}>Analytics</Text>
+
+  <View style={styles.analyticsRow}>
+    <Text style={styles.analyticsLabel}>Total Reports</Text>
+    <Text style={styles.analyticsCount}>{totalReports}</Text>
+  </View>
+
+  <View style={styles.buttonWrapper}>
+    <TouchableOpacity
+      style={styles.viewReportsButton}
+      onPress={() => router.push("/(tabs)/ReportsHistory")}
+    >
+      <Ionicons name="document-text-outline" size={20} color="black" />
+      <Text style={styles.viewReportsButtonText}>View My Reports</Text>
+    </TouchableOpacity>
+  </View>
+</View>
       </ScrollView>
 
       {/* --- Bottom Navigation Bar --- */}
-      <View style={styles.bottomNav}>
-        <BottomNavItem iconName="book" label="ResLib" isSelected={false} />
-        <BottomNavItem iconName="scan-circle-outline" label="Specie AI" isSelected={false} />
-        <BottomNavItem iconName="home" label="Home" isSelected={true} />
-        <BottomNavItem iconName="list" label="Reports" isSelected={false} />
-        <BottomNavItem iconName="settings" label="Settings" isSelected={false} />
-      </View>
+      <BottomNav />
 
       {/* ✅ Sidebar Overlay */}
       {sidebarOpen && (
@@ -200,9 +220,9 @@ const HomeScreen = () => {
           <Text style={styles.sidebarText}>Logout</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('My Reports')}>
+        <TouchableOpacity style={styles.sidebarItem} onPress={() => router.push("/(tabs)/ReportsHistory")}        >
           <Ionicons name="document-text-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>My Reports</Text>
+          <Text style={styles.sidebarText}>Reports history</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('Support')}>
@@ -213,14 +233,6 @@ const HomeScreen = () => {
     </SafeAreaView>
   );
 };
-
-// Bottom nav item
-const BottomNavItem = ({ iconName, label, isSelected }) => (
-  <TouchableOpacity style={styles.navItem}>
-    <Ionicons name={iconName} size={24} color={isSelected ? '#000' : '#888'} />
-    <Text style={[styles.navText, isSelected && styles.navTextSelected]}>{label}</Text>
-  </TouchableOpacity>
-);
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f2f2f2' },
@@ -239,15 +251,10 @@ const styles = StyleSheet.create({
   factContainer: {
     backgroundColor: '#406040',
     padding: 20,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    minHeight: 180,
   },
-  factTextGroup: { flex: 2, paddingRight: 10 },
+  factTextGroup: { width: '100%' },
   factTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFD700', marginBottom: 10 },
   factBody: { fontSize: 14, color: '#fff', lineHeight: 20 },
-  bearImage: { width: width * 0.35, height: 120 },
 
   uploadSection: {
     flexDirection: 'row',
@@ -296,31 +303,30 @@ const styles = StyleSheet.create({
   analyticsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
   analyticsLabel: { fontSize: 16, color: '#555' },
   analyticsCount: { fontSize: 20, fontWeight: '600', color: '#333' },
-  viewReportsButton: {
-    backgroundColor: '#FFD700',
-    paddingVertical: 12,
-    borderRadius: 6,
-    width: '50%',
-    alignSelf: 'flex-end',
-    marginTop: 20,
-  },
-  viewReportsButtonText: { fontSize: 16, fontWeight: '700', color: '#000', textAlign: 'center' },
 
-  bottomNav: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+  buttonWrapper: {
     alignItems: 'center',
-    height: 60,
-    backgroundColor: '#fff',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    position: 'absolute',
-    bottom: 0,
+    justifyContent: 'center',
+    marginTop: 5,
+  },
+
+  viewReportsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFD700',
+    padding: 15,
+    margin: 15,
+    borderRadius: 10,
     width: '100%',
   },
-  navItem: { flex: 1, alignItems: 'center', paddingTop: 5 },
-  navText: { fontSize: 10, color: '#888' },
-  navTextSelected: { color: '#000', fontWeight: 'bold' },
+  
+  viewReportsButtonText: {
+    color: 'black',
+    fontSize: 16,
+    fontWeight: '700',
+    marginLeft: 8,
+  },
 
   // ✅ Sidebar styles
   overlay: {

@@ -7,16 +7,14 @@ const BottomNav = ({ active }) => {
   const router = useRouter();
 
   const navItems = [
-    { icon: 'book', label: 'ResLib', route: '/(tabs)/ResourceLibrary' },
-    { icon: 'scan-circle-outline', label: 'Specie AI', route: '/(tabs)/SpecieAI' },
+    { icon: 'book', label: 'ResLib', route: '/(tabs)/ResearcherHub' },
     { icon: 'home', label: 'Home', route: '/(tabs)/HomeScreen' },
-    { icon: 'list', label: 'Reports', route: '/(tabs)/ReportsFeed' },
-    { icon: 'settings', label: 'Settings', route: '/(tabs)/Settings' },
+    { icon: 'scan-circle-outline', label: 'Specie AI', route: '/(tabs)/UploadReport' },
   ];
 
   const handleNavigation = (route) => {
-    // Use replace to switch tabs properly
-    router.replace(route);
+    // Use push instead of replace for better navigation
+    router.push(route);
   };
 
   return (
