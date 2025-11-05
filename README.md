@@ -112,11 +112,43 @@ Moderate community interactions to maintain report authenticity.
 ## 📲 Getting Started
 
 ### 1️⃣ Clone the Repository
-```bash
-git clone https://github.com/AzkaH14/Wildyn-North.git
-cd REPOSITORY_NAME
 
-## 🛠️ Project team members
-Member 1: Azka Humayon 47631
-Member 2: Aleeha Akhlaq 46174
-Member 3: Rida Fatima 48403
+git clone https://github.com/AzkaH14/Wildyn-North.git
+cd Wildyn-North
+
+2. Frontend Setup (React Native + Expo)
+Navigate to the app folder:
+cd app
+
+Install dependencies:
+npm install
+
+Start the Expo development server:
+npx expo start
+
+
+📱 Tip: Scan the QR code with Expo Go (Android/iOS) to run the app on your mobile device.
+
+🖥️ 3. Backend Setup (Node.js + Express + MongoDB)
+Navigate to the backend folder:
+cd ../backend
+
+Install dependencies:
+npm install
+
+🔑 4. Configure Environment Variables
+
+Create a .env file inside the backend directory with the following keys:
+ONGODB_URI=mongodb+srv://fyp123_db_user:myNewfyp135@fypcluster.esvbtmd.mongodb.net/wildlife-app?retryWrites=true&w=majority&appName=FYPCluster
+PORT=5000
+
+🚀 5. Run the Backend Server
+node server.js
+
+or for live reload:
+
+npm run dev
+
+If setup is successful, you should see:
+Server running on port 5000
+Connected to MongoDB successfully
