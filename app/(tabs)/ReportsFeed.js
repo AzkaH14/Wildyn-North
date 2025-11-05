@@ -18,7 +18,7 @@ import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../../components/BottomNav";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://172.21.247.100:5000'; // backend URL
+const API_URL = 'http://172.21.244.98:5000'; // backend URL
 
 const offensiveWords = ["badword", "ugly", "offensive"];
 

@@ -17,7 +17,7 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNav from '../../components/BottomNav';
 
-const API_URL = 'http://172.21.247.100:5000';
+const API_URL = 'http://172.21.244.98:5000';
 
 const { width } = Dimensions.get('window');
 

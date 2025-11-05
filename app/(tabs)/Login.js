@@ -14,7 +14,7 @@ import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://172.21.247.100:5000'; // Update with your backend IP
+const API_URL = 'http://172.21.244.98:5000'; // Update with your backend IP
 
 const Login = () => {
   const router = useRouter();
@@ -59,11 +59,17 @@ const Login = () => {
         await AsyncStorage.setItem('username', result.user.username);
         await AsyncStorage.setItem('userEmail', result.user.email);
         await AsyncStorage.setItem('isLoggedIn', 'true');
+        await AsyncStorage.setItem('userType', result.user.userType || 'community');
+
+        // Navigate based on user type
+        const redirectScreen = result.user.userType === 'researcher' 
+          ? '/(tabs)/HomeScreenR' 
+          : '/(tabs)/HomeScreen';
 
         Alert.alert('Success', 'Logged in successfully!', [
           {
             text: 'OK',
-            onPress: () => router.replace('/(tabs)/HomeScreen'),
+            onPress: () => router.replace(redirectScreen),
           },
         ]);
       } else {

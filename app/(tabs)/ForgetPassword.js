@@ -12,7 +12,7 @@ import {
 import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
 import { useRouter } from 'expo-router';
 
-const API_URL = 'http://172.21.247.100:5000'; 
+const API_URL = 'http://172.21.244.98:5000'; 
 
 const ForgetPassword = () => {
   const router = useRouter();
