@@ -42,16 +42,16 @@ const SignInAs = () => {
           style={[
             styles.card,
             styles.communityCard,
-            selectedRole === 'community' && styles.cardSelected,
+            selectedRole === 'researcher' && styles.cardSelected,
           ]}
-          onPress={() => setSelectedRole('community')}
+          onPress={() => setSelectedRole('researcher')}
           activeOpacity={0.8}
         >
           <View style={styles.iconContainer}>
             <View style={styles.iconHead} />
             <View style={[styles.iconBody, styles.communityIconBody]} />
           </View>
-          <Text style={styles.cardLabel}>Reseacrher</Text>
+          <Text style={styles.cardLabel}>Researcher</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -79,7 +79,7 @@ const SignInAs = () => {
         ]}
         activeOpacity={0.9}
         onPress={() => {
-          if (selectedRole === 'community') {
+          if (selectedRole === 'researcher') {
             router.push('/(tabs)/EducationScreen');
           } else if (selectedRole === 'individual') {
             router.replace('/(tabs)/Signup');

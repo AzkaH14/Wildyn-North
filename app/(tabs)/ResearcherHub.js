@@ -30,8 +30,8 @@ export default function ResearcherHub() {
         <View style={styles.cardsContainer}>
           {/* Card 1 - Create Species Card */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#d1fae5' }]}>
-              <Ionicons name="pencil" size={32} color="#10b981" />
+            <View style={[styles.cardIconContainer, { backgroundColor: 'lightgrey' }]}>
+              <Ionicons name="pencil" size={32} color="black" />
             </View>
             <Text style={styles.cardTitle}>Create Species Card</Text>
             <Text style={styles.cardDescription}>
@@ -47,8 +47,8 @@ export default function ResearcherHub() {
 
           {/* Card 2 - Wildlife Library */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#dbeafe' }]}>
-              <Ionicons name="library" size={32} color="#3b82f6" />
+            <View style={[styles.cardIconContainer, { backgroundColor: '#FFF5C2' }]}>
+              <Ionicons name="library" size={32} color="#FFD700" />
             </View>
             <Text style={styles.cardTitle}>Wildlife Library</Text>
             <Text style={styles.cardDescription}>
@@ -64,10 +64,10 @@ export default function ResearcherHub() {
 
           {/* Card 3 - Upload Report */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#fef3c7' }]}>
-              <Ionicons name="cloud-upload" size={32} color="#f59e0b" />
+            <View style={[styles.cardIconContainer, { backgroundColor: '#cedece' }]}>
+              <Ionicons name="cloud-upload" size={32} color="#406040" />
             </View>
-            <Text style={styles.cardTitle}>Upload Report</Text>
+            <Text style={styles.cardTitle}>Upload Species Card</Text>
             <Text style={styles.cardDescription}>
               Upload and share your wildlife observations
             </Text>
@@ -107,7 +107,7 @@ export default function ResearcherHub() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#e6f7f7',
+    backgroundColor: '#cedece',
   },
   header: {
     flexDirection: 'row',
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderLeftWidth: 5,
-    borderLeftColor: '#10b981',
+    borderLeftColor: '#406040',
   },
   cardIconContainer: {
     width: 64,

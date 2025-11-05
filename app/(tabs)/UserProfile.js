@@ -19,7 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'http://172.21.247.100:5000'; // Update with your backend IP
+const API_URL = 'http://172.21.244.98:5000'; // Update with your backend IP
 
 const UserProfile = () => {
   const router = useRouter();

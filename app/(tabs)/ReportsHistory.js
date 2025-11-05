@@ -19,7 +19,7 @@ import { useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-const API_URL = "http://172.21.247.100:5000"; // your backend
+const API_URL = "http://172.21.244.98:5000"; // your backend
 
 const ReportsHistory = () => {
   const router = useRouter();

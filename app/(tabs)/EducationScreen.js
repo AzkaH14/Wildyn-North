@@ -8,8 +8,10 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ResearcherEducationScreen = () => {
   const router = useRouter();
@@ -21,16 +23,65 @@ const ResearcherEducationScreen = () => {
     certifications: '',
     specialization: '',
   });
+  const [errors, setErrors] = useState({});
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
+    // Clear error when user starts typing
+    if (errors[field]) {
+      setErrors(prev => ({
+        ...prev,
+        [field]: '',
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.highestDegree.trim()) {
+      newErrors.highestDegree = 'Highest degree is required';
+    }
+    
+    if (!formData.fieldOfStudy.trim()) {
+      newErrors.fieldOfStudy = 'Field of study is required';
+    }
+    
+    if (!formData.institution.trim()) {
+      newErrors.institution = 'Institution/University is required';
+    }
+    
+    if (!formData.graduationYear.trim()) {
+      newErrors.graduationYear = 'Graduation year is required';
+    } else {
+      const year = parseInt(formData.graduationYear);
+      const currentYear = new Date().getFullYear();
+      if (isNaN(year) || year < 1950 || year > currentYear) {
+        newErrors.graduationYear = 'Please enter a valid year';
+      }
+    }
+    
+    if (!formData.specialization.trim()) {
+      newErrors.specialization = 'Specialization is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleDone = () => {
-    console.log('Education Details:', formData);
+    if (!validateForm()) {
+      Alert.alert('Validation Error', 'Please fill in all required fields correctly');
+      return;
+    }
+
+    // Store education data temporarily for signup
+    AsyncStorage.setItem('researcherEducationData', JSON.stringify(formData));
+    AsyncStorage.setItem('userType', 'researcher');
+    
     // Navigate to Signup screen
     router.push('/(tabs)/Signup');
   };
@@ -49,46 +100,51 @@ const ResearcherEducationScreen = () => {
             <Text style={styles.subtitle}>Educational Details</Text>
 
             <TextInput
-              style={styles.input}
-              placeholder="Highest Degree (e.g., PhD, Masters)"
+              style={[styles.input, errors.highestDegree && styles.inputError]}
+              placeholder="Highest Degree (e.g., PhD, Masters) *"
               value={formData.highestDegree}
               onChangeText={(text) => handleInputChange('highestDegree', text)}
               placeholderTextColor="#999"
             />
+            {errors.highestDegree ? <Text style={styles.errorText}>{errors.highestDegree}</Text> : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Field of Study"
+              style={[styles.input, errors.fieldOfStudy && styles.inputError]}
+              placeholder="Field of Study *"
               value={formData.fieldOfStudy}
               onChangeText={(text) => handleInputChange('fieldOfStudy', text)}
               placeholderTextColor="#999"
             />
+            {errors.fieldOfStudy ? <Text style={styles.errorText}>{errors.fieldOfStudy}</Text> : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Institution/University"
+              style={[styles.input, errors.institution && styles.inputError]}
+              placeholder="Institution/University *"
               value={formData.institution}
               onChangeText={(text) => handleInputChange('institution', text)}
               placeholderTextColor="#999"
             />
+            {errors.institution ? <Text style={styles.errorText}>{errors.institution}</Text> : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Graduation Year"
+              style={[styles.input, errors.graduationYear && styles.inputError]}
+              placeholder="Graduation Year *"
               value={formData.graduationYear}
               onChangeText={(text) => handleInputChange('graduationYear', text)}
               keyboardType="numeric"
               maxLength={4}
               placeholderTextColor="#999"
             />
+            {errors.graduationYear ? <Text style={styles.errorText}>{errors.graduationYear}</Text> : null}
 
             <TextInput
-              style={styles.input}
-              placeholder="Specialization"
+              style={[styles.input, errors.specialization && styles.inputError]}
+              placeholder="Specialization *"
               value={formData.specialization}
               onChangeText={(text) => handleInputChange('specialization', text)}
               placeholderTextColor="#999"
             />
+            {errors.specialization ? <Text style={styles.errorText}>{errors.specialization}</Text> : null}
 
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -156,6 +212,17 @@ const styles = StyleSheet.create({
   textArea: {
     minHeight: 80,
     paddingTop: 14,
+  },
+  inputError: {
+    borderWidth: 1,
+    borderColor: '#FF6B6B',
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    marginTop: -10,
+    marginBottom: 10,
+    marginLeft: 5,
   },
   button: {
     width: '100%',
