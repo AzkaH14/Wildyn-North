@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   navText: {
     fontSize: 10,
-    color: '#888',
+    color: '#999',
   },
   navTextSelected: {
     color: '#000',
