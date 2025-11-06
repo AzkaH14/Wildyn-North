@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
   },
   
   viewReportsButtonText: {
-    color: 'black',
+    color: 'white',
     fontSize: 16,
     fontWeight: '700',
     marginLeft: 8,
