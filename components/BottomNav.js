@@ -101,8 +101,12 @@ const styles = StyleSheet.create({
     paddingTop: 5,
   },
   navText: {
+
     fontSize: 11,
     color: '#888',
+
+ 
+
   },
   navTextSelected: {
     color: '#2d6a4f',
