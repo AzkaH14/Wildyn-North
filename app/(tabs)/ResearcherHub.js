@@ -4,20 +4,32 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import BottomNav from '../../components/BottomNav';
 
 export default function ResearcherHub() {
+  const router = useRouter();
+
+  const handleCardPress = (screen) => {
+    router.push(screen);
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={{ width: 24 }} />
+        <TouchableOpacity 
+          onPress={() => router.push('/(tabs)/HomeScreenR')}
+          style={styles.backButton}
+        >
+          <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
+        </TouchableOpacity>
         <Text style={styles.headerTitle}>Researcher's Hub</Text>
-        <View style={{ width: 24 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       {/* Main Content */}
@@ -30,71 +42,54 @@ export default function ResearcherHub() {
         <View style={styles.cardsContainer}>
           {/* Card 1 - Create Species Card */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: 'lightgrey' }]}>
-              <Ionicons name="pencil" size={32} color="black" />
+            <View style={[styles.cardIconContainer, { backgroundColor: '#d1fae5' }]}>
+              <Ionicons name="pencil" size={32} color="#10b981" />
             </View>
-            <Text style={styles.cardTitle}>Create Species Card</Text>
+            <Text style={styles.cardTitle}>Create Species Fact</Text>
             <Text style={styles.cardDescription}>
               Add new wildlife species to the database
             </Text>
             <View style={styles.cardAction}>
-              <Text style={[styles.cardActionText, { color: '#10b981' }]}>
+              <Text style={[styles.cardActionText, { color: '#2d6a4f' }]}>
                 Get Started
               </Text>
-              <Ionicons name="arrow-forward" size={16} color="#10b981" />
+              <Ionicons name="arrow-forward" size={16} color="#2d6a4f" />
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Card 2 - Wildlife Library */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#FFF5C2' }]}>
-              <Ionicons name="library" size={32} color="#FFD700" />
+            <View style={[styles.cardIconContainer, { backgroundColor: '#dbeafe' }]}>
+              <Ionicons name="library" size={32} color="#3b82f6" />
             </View>
             <Text style={styles.cardTitle}>Wildlife Library</Text>
             <Text style={styles.cardDescription}>
               Browse comprehensive wildlife database
             </Text>
             <View style={styles.cardAction}>
-              <Text style={[styles.cardActionText, { color: '#3b82f6' }]}>
+              <Text style={[styles.cardActionText, { color: '#2d6a4f' }]}>
                 Explore
               </Text>
-              <Ionicons name="arrow-forward" size={16} color="#3b82f6" />
+              <Ionicons name="arrow-forward" size={16} color="#2d6a4f" />
             </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Card 3 - Upload Report */}
           <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#cedece' }]}>
-              <Ionicons name="cloud-upload" size={32} color="#406040" />
+            <View style={[styles.cardIconContainer, { backgroundColor: '#fef3c7' }]}>
+              <Ionicons name="cloud-upload" size={32} color="#f59e0b" />
             </View>
-            <Text style={styles.cardTitle}>Upload Species Card</Text>
+            <Text style={styles.cardTitle}>Upload Report</Text>
             <Text style={styles.cardDescription}>
-              Upload and share your wildlife observations
+              Upload and share survey forms with the community
             </Text>
             <View style={styles.cardAction}>
-              <Text style={[styles.cardActionText, { color: '#f59e0b' }]}>
+              <Text style={[styles.cardActionText, { color: '#2d6a4f' }]}>
                 Upload New
               </Text>
-              <Ionicons name="arrow-forward" size={16} color="#f59e0b" />
+              <Ionicons name="arrow-forward" size={16} color="#2d6a4f" />
             </View>
-          </View>
-
-          {/* Card 4 - View Reports */}
-          <View style={styles.card}>
-            <View style={[styles.cardIconContainer, { backgroundColor: '#e9d5ff' }]}>
-              <Ionicons name="document-text" size={32} color="#9333ea" />
-            </View>
-            <Text style={styles.cardTitle}>View Reports</Text>
-            <Text style={styles.cardDescription}>
-              Browse all wildlife reports and observations
-            </Text>
-            <View style={styles.cardAction}>
-              <Text style={[styles.cardActionText, { color: '#9333ea' }]}>
-                View All
-              </Text>
-              <Ionicons name="arrow-forward" size={16} color="#9333ea" />
-            </View>
-          </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -107,22 +102,30 @@ export default function ResearcherHub() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#cedece',
+    backgroundColor: '#e6f7f7',
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '700',
-    color: '#064e3b',
+    color: '#1a1a1a',
+    flex: 1,
+    textAlign: 'center',
   },
   container: {
     paddingBottom: 80,
@@ -133,9 +136,12 @@ const styles = StyleSheet.create({
   },
   introTitle: {
     fontSize: 16,
-    color: '#047857',
-    textAlign: 'center',
-    fontWeight: '500',
+    color: 'gray',
+    textAlign: 'left',
+    fontWeight: 'light',
+    marginLeft : 10,
+    marginTop : -13,
+    marginBottom :-13,
   },
   cardsContainer: {
     padding: 15,
@@ -151,7 +157,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
     borderLeftWidth: 5,
-    borderLeftColor: '#406040',
+    borderLeftColor: '#10b981',
   },
   cardIconContainer: {
     width: 64,

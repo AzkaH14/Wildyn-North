@@ -11,7 +11,6 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ResearcherEducationScreen = () => {
   const router = useRouter();
@@ -88,6 +87,13 @@ const ResearcherEducationScreen = () => {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={['#FFFFFF', '#FFF9E6', '#FFFFFF']}
+        style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 0, y: 0.3 }}
+      />
+      
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -96,55 +102,60 @@ const ResearcherEducationScreen = () => {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Text style={styles.icon}>🎓</Text>
+            </View>
+            <Text style={styles.title}>Educational Background</Text>
+            <Text style={styles.description}>
+              Help us understand your academic journey
+            </Text>
+          </View>
+
           <View style={styles.card}>
             <Text style={styles.subtitle}>Educational Details</Text>
 
             <TextInput
-              style={[styles.input, errors.highestDegree && styles.inputError]}
-              placeholder="Highest Degree (e.g., PhD, Masters) *"
+              style={styles.input}
+              placeholder="Highest Degree (e.g., PhD, Masters)"
               value={formData.highestDegree}
               onChangeText={(text) => handleInputChange('highestDegree', text)}
               placeholderTextColor="#999"
             />
-            {errors.highestDegree ? <Text style={styles.errorText}>{errors.highestDegree}</Text> : null}
 
             <TextInput
-              style={[styles.input, errors.fieldOfStudy && styles.inputError]}
-              placeholder="Field of Study *"
+              style={styles.input}
+              placeholder="Field of Study"
               value={formData.fieldOfStudy}
               onChangeText={(text) => handleInputChange('fieldOfStudy', text)}
               placeholderTextColor="#999"
             />
-            {errors.fieldOfStudy ? <Text style={styles.errorText}>{errors.fieldOfStudy}</Text> : null}
 
             <TextInput
-              style={[styles.input, errors.institution && styles.inputError]}
-              placeholder="Institution/University *"
+              style={styles.input}
+              placeholder="Institution/University"
               value={formData.institution}
               onChangeText={(text) => handleInputChange('institution', text)}
               placeholderTextColor="#999"
             />
-            {errors.institution ? <Text style={styles.errorText}>{errors.institution}</Text> : null}
 
             <TextInput
-              style={[styles.input, errors.graduationYear && styles.inputError]}
-              placeholder="Graduation Year *"
+              style={styles.input}
+              placeholder="Graduation Year"
               value={formData.graduationYear}
               onChangeText={(text) => handleInputChange('graduationYear', text)}
               keyboardType="numeric"
               maxLength={4}
               placeholderTextColor="#999"
             />
-            {errors.graduationYear ? <Text style={styles.errorText}>{errors.graduationYear}</Text> : null}
 
             <TextInput
-              style={[styles.input, errors.specialization && styles.inputError]}
-              placeholder="Specialization *"
+              style={styles.input}
+              placeholder="Specialization"
               value={formData.specialization}
               onChangeText={(text) => handleInputChange('specialization', text)}
               placeholderTextColor="#999"
             />
-            {errors.specialization ? <Text style={styles.errorText}>{errors.specialization}</Text> : null}
 
             <TextInput
               style={[styles.input, styles.textArea]}
@@ -162,7 +173,14 @@ const ResearcherEducationScreen = () => {
               onPress={handleDone}
               activeOpacity={0.8}
             >
-              <Text style={styles.buttonText}>NEXT</Text>
+              <LinearGradient
+                colors={['#FFD500', '#FFC700']}
+                style={styles.buttonGradient}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Text style={styles.buttonText}>Continue</Text>
+              </LinearGradient>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -176,75 +194,134 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
+  gradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 300,
+  },
   keyboardView: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    padding: 0,
+    padding: 20,
+    paddingTop: 60,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: 32,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  icon: {
+    fontSize: 40,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#1A1A1A',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 15,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: 20,
   },
   card: {
-    flex: 1,
     backgroundColor: '#FFFFFF',
-    padding: 32,
-    paddingTop: 60,
-    width: '100%',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 8,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 8,
+    marginBottom: 20,
   },
-  subtitle: {
+  formSection: {
+    marginBottom: 24,
+  },
+  sectionLabel: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 32,
-    textAlign: 'center',
+    marginBottom: 4,
+  },
+  sectionSubtext: {
+    fontSize: 13,
+    color: '#999',
+    marginBottom: 20,
+  },
+  inputGroup: {
+    marginBottom: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 8,
   },
   input: {
     width: '100%',
-    backgroundColor: '#F5F5F5',
-    borderRadius: 8,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
     color: '#1A1A1A',
-    marginBottom: 16,
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: '#E8E8E8',
   },
   textArea: {
-    minHeight: 80,
+    minHeight: 90,
     paddingTop: 14,
-  },
-  inputError: {
-    borderWidth: 1,
-    borderColor: '#FF6B6B',
-  },
-  errorText: {
-    color: '#FF6B6B',
-    fontSize: 12,
-    marginTop: -10,
-    marginBottom: 10,
-    marginLeft: 5,
   },
   button: {
     width: '100%',
-    backgroundColor: '#FFD500',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
+    borderRadius: 12,
+    overflow: 'hidden',
     marginTop: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    shadowColor: '#FFD700',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '700',
     color: '#1A1A1A',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
+    marginRight: 8,
   },
 });
 

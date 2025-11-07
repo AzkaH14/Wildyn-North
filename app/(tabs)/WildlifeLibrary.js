@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -16,36 +17,45 @@ import BottomNav from '../../components/BottomNav';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // SpeciesCard component for navigation
-const SpeciesCard = ({ species, onPress }) => {
+const SpeciesCard = ({ species, onPress, onDelete }) => {
   return (
-    <TouchableOpacity 
-      style={styles.card} 
-      onPress={onPress} 
-      activeOpacity={0.7}
-    >
-      <Image 
-        source={{ uri: species.imageUri || 'https://via.placeholder.com/400x300' }} 
-        style={styles.image} 
-      />
-      <View style={styles.cardContent}>
-        <Text style={styles.name}>{species.commonName}</Text>
-        {species.scientificName && (
-          <Text style={styles.scientificName}>{species.scientificName}</Text>
-        )}
-        {species.urduName && (
-          <Text style={styles.urduName}>{species.urduName}</Text>
-        )}
-        {species.conservationStatus && (
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{species.conservationStatus}</Text>
+    <View style={styles.cardContainer}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={onPress} 
+        activeOpacity={0.7}
+      >
+        <Image 
+          source={{ uri: species.imageUri || 'https://via.placeholder.com/400x300' }} 
+          style={styles.image} 
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.name}>{species.commonName}</Text>
+          {species.scientificName && (
+            <Text style={styles.scientificName}>{species.scientificName}</Text>
+          )}
+          {species.urduName && (
+            <Text style={styles.urduName}>{species.urduName}</Text>
+          )}
+          {species.conservationStatus && (
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{species.conservationStatus}</Text>
+            </View>
+          )}
+          <View style={styles.viewMore}>
+            <Text style={styles.viewMoreText}>View Details</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFD700" />
           </View>
-        )}
-        <View style={styles.viewMore}>
-          <Text style={styles.viewMoreText}>View Details</Text>
-          <Ionicons name="arrow-forward" size={16} color="#FFD700" />
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+      <TouchableOpacity 
+        style={styles.deleteButton}
+        onPress={onDelete}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="trash-outline" size={24} color="#dc2626" />
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -87,13 +97,53 @@ export default function WildlifeLibrary() {
     loadWildlifeData();
   };
 
+  // Delete species card
+  const handleDeleteCard = async (speciesId, speciesName) => {
+    Alert.alert(
+      'Delete Species Card',
+      `Are you sure you want to delete "${speciesName}"? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const data = await AsyncStorage.getItem('wildlifeCards');
+              if (data) {
+                let wildlifeCards = JSON.parse(data);
+                // Filter out the card to be deleted
+                wildlifeCards = wildlifeCards.filter(card => card._id !== speciesId);
+                // Save updated cards back to AsyncStorage
+                await AsyncStorage.setItem('wildlifeCards', JSON.stringify(wildlifeCards));
+                // Reload the data to update the UI
+                loadWildlifeData();
+              }
+            } catch (error) {
+              console.error('Error deleting species card:', error);
+              Alert.alert('Error', 'Failed to delete species card. Please try again.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity 
+            onPress={() => router.push('/(tabs)/ResearcherHub')}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Wildlife Library</Text>
           <TouchableOpacity 
             onPress={() => router.push('/(tabs)/createcard')}
@@ -138,6 +188,7 @@ export default function WildlifeLibrary() {
                 pathname: '/(tabs)/speciedetial',
                 params: { species: JSON.stringify(item) }
               })}
+              onDelete={() => handleDeleteCard(item._id, item.commonName || 'this species')}
             />
           ))
         )}
@@ -160,20 +211,30 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#fff',
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: '#1a1a1a',
     flex: 1,
     textAlign: 'center',
   },
   addButtonHeader: {
-    width: 24,
-    alignItems: 'center',
+    width: 40,
+    height: 40,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   content: {
     padding: 15,
@@ -212,12 +273,25 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: 8,
   },
+  cardContainer: {
+    position: 'relative',
+    marginVertical: 10,
+  },
   card: {
     backgroundColor: '#fff',
-    marginVertical: 10,
     borderRadius: 10,
     elevation: 3,
     overflow: 'hidden',
+  },
+  deleteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    width: 36,
+    height: 36,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 1000,
   },
   image: {
     width: '100%',
