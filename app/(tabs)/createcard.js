@@ -16,6 +16,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
 
 export const CreateSpeciesCardScreen = ({ navigation }) => {
   const router = useRouter();
@@ -99,6 +100,10 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
     setImagePickerModal(true);
   };
 
+  const handleBackPress = () => {
+    router.push('/(tabs)/ResearcherHub');
+  };
+
   const handleSubmit = async () => {
     if (!formData.commonName || !formData.scientificName) {
       Alert.alert('Error', 'Please fill in at least Common Name and Scientific Name');
@@ -141,11 +146,12 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
   };
 
   return (
+     <KeyboardAwareContainer>
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+        <TouchableOpacity onPress={handleBackPress}>
+        <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Species Card</Text>
         <View style={{ width: 24 }} />
@@ -314,6 +320,7 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
         </View>
       </Modal>
     </SafeAreaView>
+    </KeyboardAwareContainer>
   );
 };
 

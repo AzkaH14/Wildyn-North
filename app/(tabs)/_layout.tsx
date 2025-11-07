@@ -81,6 +81,42 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ✅ Researcher Hub Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="ResearcherHub"
+        options={{
+          href: null,
+          title: 'Researcher Hub',
+        }}
+      />
+
+      {/* ✅ Create Species Card Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="CreateSpeciesCard"
+        options={{
+          href: null,
+          title: 'Create Species Card',
+        }}
+      />
+
+      {/* ✅ Create Card Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="CreateCard"
+        options={{
+          href: null,
+          title: 'Create Card',
+        }}
+      />
+
+      {/* ✅ Create Survey Form Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="CreateSurveyForm"
+        options={{
+          href: null,
+          title: 'Create Survey Form',
+        }}
+      />
+
       {/* ✅ Auth Screens — Hidden from tab bar */}
       <Tabs.Screen
         name="WildlifeScreen"

@@ -14,10 +14,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNav from '../../components/BottomNav';
 
-const API_URL = 'http://172.21.244.98:5000';
+const API_URL = 'http://172.21.247.100:5000';
 
 const { width } = Dimensions.get('window');
 
@@ -55,18 +56,20 @@ const HomeScreen = () => {
   const router = useRouter();
 
   // ✅ Sidebar animation
-  const slideAnim = useRef(new Animated.Value(-width * 0.7)).current;
+  const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
   // Profile image state
   const [profileImage, setProfileImage] = useState(null);
   const [totalReports, setTotalReports] = useState(0);
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
 
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
-      toValue: sidebarOpen ? -width * 0.7 : 0,
-      duration: 250,
-      easing: Easing.ease,
+      toValue: sidebarOpen ? -width * 0.75 : 0,
+      duration: 300,
+      easing: Easing.bezier(0.4, 0.0, 0.2, 1),
       useNativeDriver: false,
     }).start();
     setSidebarOpen(!sidebarOpen);
@@ -95,23 +98,62 @@ const HomeScreen = () => {
     }
   };
 
+  const loadUserProfile = async () => {
+    try {
+      const userId = await AsyncStorage.getItem('userId');
+      if (userId) {
+        try {
+          const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
+          const result = await response.json();
+          if (response.ok && result.user) {
+            setUsername(result.user.username || '');
+            setEmail(result.user.email || '');
+            await AsyncStorage.setItem('username', result.user.username || '');
+            await AsyncStorage.setItem('userEmail', result.user.email || '');
+            return;
+          }
+        } catch (_) {}
+      }
+      const savedUsername = await AsyncStorage.getItem('username');
+      const savedEmail = await AsyncStorage.getItem('userEmail');
+      if (savedUsername) setUsername(savedUsername);
+      if (savedEmail) setEmail(savedEmail);
+    } catch (_) {}
+  };
+
   // Load profile image on component mount and when screen comes into focus
   useEffect(() => {
+    const ensureCommunityUser = async () => {
+      try {
+        const userType = await AsyncStorage.getItem('userType');
+        if (userType === 'researcher') {
+          router.replace('/(tabs)/HomeScreenR');
+          return;
+        }
+      } catch (_) {
+        // Allow unauthenticated users to view Home
+        return;
+      }
+    };
+
+    ensureCommunityUser();
     loadProfileImage();
     loadReportCount();
+    loadUserProfile();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
       loadProfileImage();
       loadReportCount();
+      loadUserProfile();
     }, [])
   );
 
   const handleLogout = async () => {
     try {
       // Clear all user data from AsyncStorage
-      await AsyncStorage.multiRemove(['userId', 'username', 'userEmail', 'isLoggedIn', 'profileImage']);
+      await AsyncStorage.multiRemove(['userId', 'username', 'userEmail', 'isLoggedIn', 'profileImage', 'userType']);
       toggleSidebar();
       // Navigate to Login screen and prevent going back
       router.replace('/(tabs)/Login');
@@ -127,79 +169,101 @@ const HomeScreen = () => {
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        {/* ✅ Hamburger */}
-        <TouchableOpacity onPress={toggleSidebar}>
-          <Ionicons name="menu" size={28} color="#000" />
+        <TouchableOpacity onPress={toggleSidebar} style={styles.menuButton}>
+          <Ionicons name="menu" size={26} color="#1a1a1a" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Home</Text>
-       <TouchableOpacity onPress={() => router.push('/(tabs)/UserProfile')}>
-  {profileImage ? (
-    <Image
-      source={{ uri: profileImage }}
-      style={{ width: 35, height: 35, borderRadius: 20 }}
-    />
-  ) : (
-    <Ionicons name="person-circle" size={30} color="#000" />
-  )}
-</TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Community Portal</Text>
+          <Text style={styles.headerSubtitle}>Wildlife Conservation</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/UserProfile')} style={styles.profileButton}>
+          {profileImage ? (
+            <Image source={{ uri: profileImage }} style={{ width: 32, height: 32, borderRadius: 16 }} />
+          ) : (
+            <Ionicons name="person-circle-outline" size={32} color="#2d6a4f" />
+          )}
+        </TouchableOpacity>
       </View>
 
       {/* Main Content */}
       <ScrollView contentContainerStyle={styles.container}>
-        {/* --- Fact of the Day --- */}
-        <View style={styles.factContainer}>
-          <View style={styles.factTextGroup}>
-            <Text style={styles.factTitle}>Fact of the Day</Text>
-            <Text style={styles.factBody}>
-              <Text style={{ fontWeight: 'bold' }}>{dailyFact.title}</Text> {dailyFact.text}
-            </Text>
+        {/* Daily Insight Card */}
+        <View style={styles.factWrapper}>
+          <LinearGradient
+            colors={['#1b4332', '#2d6a4f', '#40916c']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.factContainer}
+          >
+            <View style={styles.factHeader}>
+              <Ionicons name="leaf" size={28} color="#FFD700" />
+              <Text style={styles.factBadge}>Fact of the Day</Text>
+            </View>
+            <Text style={styles.factTitle}>{dailyFact.title}</Text>
+            <Text style={styles.factBody}>{dailyFact.text}</Text>
+          </LinearGradient>
+        </View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+
+          <View style={styles.actionCardsGrid}>
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => router.push('/(tabs)/ReportsFeed')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#e8f5e9' }]}>
+                <Ionicons name="document-text-outline" size={32} color="#2d6a4f" />
+              </View>
+              <Text style={styles.actionCardTitle}>View Reports</Text>
+              <Text style={styles.actionCardSubtitle}>Community Feed</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
+              onPress={() => console.log('View Map')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#e3f2fd' }]}>
+                <MaterialCommunityIcons name="map" size={32} color="#1565c0" />
+              </View>
+              <Text style={styles.actionCardTitle}>View Map</Text>
+              <Text style={styles.actionCardSubtitle}>Explore Sightings</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* --- Upload New Report --- */}
-        <View style={styles.uploadSection}>
-          <Text style={styles.uploadTitle}>Upload new report</Text>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/UploadReport')} style={styles.addButton}>
-            <Ionicons name="add-circle" size={36} color="#000" />
-          </TouchableOpacity>
+        {/* Upload New Report */}
+        <View style={styles.section}>
+          <View style={styles.uploadSection}>
+            <Text style={styles.uploadTitle}>Upload new report</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/UploadReport')} style={styles.addButton}>
+              <Ionicons name="add-circle" size={36} color="#000" />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* --- Report Buttons --- */}
-        <View style={styles.reportButtonsContainer}>
-          <TouchableOpacity style={styles.reportCard} onPress={() => console.log('View Map')}>
-            <View style={[styles.cardImage, { justifyContent: 'center', alignItems: 'center' }]}>
-              <MaterialCommunityIcons name="map" size={80} color="#524b4bff" />
-            </View>
-            <Text style={styles.cardText}>View map</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={styles.reportCard} onPress={() => router.push("/(tabs)/ReportsFeed")}>
-            <View style={[styles.cardImage, { justifyContent: 'center', alignItems: 'center' }]}>
-              <MaterialCommunityIcons name="file-document-outline" size={80} color="#524b4bff" />
-            </View>
-            <Text style={styles.cardText}>View Reports</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* --- Analytics Section --- */}
+        {/* Analytics Section */}
         <View style={styles.analyticsSection}>
-  <Text style={styles.analyticsTitle}>Analytics</Text>
+          <Text style={styles.analyticsTitle}>Analytics</Text>
 
-  <View style={styles.analyticsRow}>
-    <Text style={styles.analyticsLabel}>Total Reports</Text>
-    <Text style={styles.analyticsCount}>{totalReports}</Text>
-  </View>
+          <View style={styles.analyticsRow}>
+            <Text style={styles.analyticsLabel}>Total Reports</Text>
+            <Text style={styles.analyticsCount}>{totalReports}</Text>
+          </View>
 
-  <View style={styles.buttonWrapper}>
-    <TouchableOpacity
-      style={styles.viewReportsButton}
-      onPress={() => router.push("/(tabs)/ReportsHistory")}
-    >
-      <Ionicons name="document-text-outline" size={20} color="black" />
-      <Text style={styles.viewReportsButtonText}>View My Reports</Text>
-    </TouchableOpacity>
-  </View>
-</View>
+          <View style={styles.buttonWrapper}>
+            <TouchableOpacity
+              style={styles.viewReportsButton}
+              onPress={() => router.push("/(tabs)/ReportsHistory")}
+            >
+              <Ionicons name="document-text-outline" size={20} color="black" />
+              <Text style={styles.viewReportsButtonText}> My Reports</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
       </ScrollView>
 
       {/* --- Bottom Navigation Bar --- */}
@@ -208,27 +272,82 @@ const HomeScreen = () => {
       {/* ✅ Sidebar Overlay */}
       {sidebarOpen && (
         <TouchableWithoutFeedback onPress={toggleSidebar}>
-          <View style={styles.overlay} />
+          <Animated.View 
+            style={[
+              styles.overlay,
+              {
+                opacity: slideAnim.interpolate({
+                  inputRange: [-width * 0.75, 0],
+                  outputRange: [0, 1],
+                }),
+              },
+            ]}
+          />
         </TouchableWithoutFeedback>
       )}
 
       {/* ✅ Sidebar Drawer */}
       <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
-        <Text style={styles.sidebarHeader}>Menu</Text>
-        <TouchableOpacity style={styles.sidebarItem} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>Logout</Text>
-        </TouchableOpacity>
+        <View style={styles.sidebarHeader}>
+          <View style={styles.sidebarProfile}>
+            <Ionicons name="person-circle" size={60} color="#2d6a4f" />
+            <Text style={styles.sidebarName}>{username || 'Community User'}</Text>
+            <Text style={styles.sidebarEmail}>{email || ''}</Text>
+          </View>
+        </View>
 
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => router.push("/(tabs)/ReportsHistory")}        >
-          <Ionicons name="document-text-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>Reports history</Text>
-        </TouchableOpacity>
+        <View style={styles.sidebarContent}>
+          <TouchableOpacity 
+            style={styles.sidebarItem}
+            onPress={() => {
+              toggleSidebar();
+              router.push('/(tabs)/ReportsHistory');
+            }}
+          >
+            <View style={styles.sidebarIconWrapper}>
+              <Ionicons name="document-text-outline" size={22} color="#2d6a4f" />
+            </View>
+            <Text style={styles.sidebarText}>Reports History</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
 
-        <TouchableOpacity style={styles.sidebarItem} onPress={() => console.log('Support')}>
-          <Ionicons name="help-circle-outline" size={22} color="#000" />
-          <Text style={styles.sidebarText}>Support</Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.sidebarItem}
+            onPress={() => {
+              toggleSidebar();
+             router.push('/(tabs)/Feedback');
+            }}
+          >
+            <View style={styles.sidebarIconWrapper}>
+              <Ionicons name="chatbubble-outline" size={22} color="#2d6a4f" />
+            </View>
+            <Text style={styles.sidebarText}>Feedback</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.sidebarItem}
+            onPress={() => {
+              toggleSidebar();
+              router.push('/(tabs)/Aboutus');
+            }}
+          >
+            <View style={styles.sidebarIconWrapper}>
+              <Ionicons name="information-circle-outline" size={22} color="#2d6a4f" />
+            </View>
+            <Text style={styles.sidebarText}>About Us</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          <View style={styles.sidebarDivider} />
+
+          <TouchableOpacity style={styles.sidebarLogout} onPress={handleLogout}>
+            <View style={[styles.sidebarIconWrapper, { backgroundColor: '#ffebee' }]}>
+              <Ionicons name="log-out-outline" size={22} color="#c62828" />
+            </View>
+            <Text style={[styles.sidebarText, { color: '#c62828' }]}>Logout</Text>
+          </TouchableOpacity>
+        </View>
       </Animated.View>
     </SafeAreaView>
   );
@@ -242,19 +361,75 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
-  headerTitle: { fontSize: 20, fontWeight: '600', color: '#000' },
-
+  menuButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#1a1a1a',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  factWrapper: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+  },
   factContainer: {
-    backgroundColor: '#406040',
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  factTextGroup: { width: '100%' },
-  factTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFD700', marginBottom: 10 },
-  factBody: { fontSize: 14, color: '#fff', lineHeight: 20 },
+  factHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  factBadge: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#FFD700',
+    marginLeft: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  factTitle: { 
+    fontSize: 20, 
+    fontWeight: '700', 
+    color: '#fff', 
+    marginBottom: 8,
+  },
+  factBody: { 
+    fontSize: 14, 
+    color: '#e8f5e9', 
+    lineHeight: 22,
+  },
 
   uploadSection: {
     flexDirection: 'row',
@@ -266,27 +441,51 @@ const styles = StyleSheet.create({
   uploadTitle: { fontSize: 18, fontWeight: '600', color: '#000' },
   addButton: { padding: 5 },
 
-  reportButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingHorizontal: 15,
-    marginBottom: 20,
+  section: {
+    paddingHorizontal: 20,
+    marginTop: 28,
   },
-  reportCard: {
-    width: '40%',
-    borderRadius: 10,
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 16,
+  },
+  actionCardsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  actionCard: {
+    width: (width - 52) / 2,
     backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
-    marginBottom: 10,
-    alignItems: 'center',
-    paddingBottom: 8,
   },
-  cardImage: { width: '100%', height: 90, borderTopLeftRadius: 10, borderTopRightRadius: 10 },
-  cardText: { fontSize: 16, fontWeight: '500', textAlign: 'center', color: '#000', marginTop: 6 },
+  actionIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  actionCardTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  actionCardSubtitle: {
+    fontSize: 12,
+    color: '#666',
+  },
 
   analyticsSection: {
     marginHorizontal: 15,
@@ -335,33 +534,74 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   sidebar: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    width: width * 0.7,
+    width: width * 0.75,
     backgroundColor: '#fff',
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    elevation: 5,
+    elevation: 16,
     zIndex: 10,
   },
   sidebarHeader: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 20,
+    paddingTop: 60,
+    paddingBottom: 24,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  sidebarProfile: {
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  sidebarName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginTop: 12,
+  },
+  sidebarEmail: {
+    fontSize: 13,
+    color: '#666',
+    marginTop: 4,
+  },
+  sidebarContent: {
+    flex: 1,
+    paddingTop: 16,
   },
   sidebarItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+  },
+  sidebarIconWrapper: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#f0f4f1',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   sidebarText: {
-    fontSize: 16,
-    marginLeft: 10,
-    color: '#000',
+    flex: 1,
+    fontSize: 15,
+    fontWeight: '500',
+    color: '#1a1a1a',
+  },
+  sidebarDivider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 8,
+    marginHorizontal: 20,
+  },
+  sidebarLogout: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
   },
 });
 
