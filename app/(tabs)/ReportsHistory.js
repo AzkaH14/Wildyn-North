@@ -1,4 +1,3 @@
-// app/(tabs)/ReportsHistory.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -19,7 +18,7 @@ import { useCallback } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 
-const API_URL = "http://172.21.247.100:5000"; // your backend
+const API_URL = "http://192.168.109.181:5000"; // your backend
 
 const ReportsHistory = () => {
   const router = useRouter();
@@ -40,7 +39,7 @@ const ReportsHistory = () => {
         Alert.alert('Error', 'Please login to view your reports');
         return;
       }
-      const response = await fetch(`${API_URL}/api/myreports?userId=${userId}`);
+      const response = await fetch(`${API_URL}/api/reports/myreports/${userId}`);
       const data = await response.json();
       if (response.ok) setMyReports(data);
     } catch (error) {
@@ -181,7 +180,9 @@ const ReportsHistory = () => {
           }
         />
 
-        <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
+        <View style={{ marginHorizontal: -10, marginBottom: -10 }}>
+  <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
+</View>
       </View>
     </SafeAreaView>
   );

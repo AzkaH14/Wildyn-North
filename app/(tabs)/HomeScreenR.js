@@ -1,12 +1,11 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { useRouter, useFocusEffect } from 'expo-router';
+import { useRouter } from 'expo-router';
 import {
   View,
   Text,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Dimensions,
   Animated,
   Easing,
@@ -15,34 +14,37 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNav from '../../components/BottomNav';
-
-const API_URL = 'http://192.168.18.25:5000';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
+const API_URL = 'http://192.168.18.25:5000';
 
-// ✅ All Facts
 const factsData = [
   {
-    title: 'Himalayan Brown Bear',
-    text: "Himalayan Brown Bear (Deosai National Park) lives up to 20–30 years in the wild, but Pakistan's population is one of the smallest in the world.",
+    title: 'Snow Leopard Conservation',
+    text: 'Pakistan hosts one of the most important snow leopard populations in the Himalayas and Karakoram ranges.',
+    icon: 'paw',
   },
   {
-    title: 'Himalayan Ibex',
-    text: 'Ibex is found at altitudes of about 3,660 to over 5,000 m in summer, descending to about 2,135 m in winter due to snow.',
+    title: 'Community Research',
+    text: 'Researchers and local communities are collaborating to track endangered species across the northern regions.',
+    icon: 'people',
   },
   {
-    title: 'Markhor Population',
-    text: 'The markhor population in Khyber-Pakhtunkhwa has risen to 5,621 individuals. Estimated population ~5,993 individuals per km² in surveyed blocks.',
+    title: 'Bird Migration Study',
+    text: 'Over 200 species of migratory birds pass through Pakistan each year, offering rich opportunities for data-driven conservation research.',
+    icon: 'leaf',
   },
   {
-    title: 'Grey Wolf',
-    text: 'Within Pakistan, there may be only a few hundred grey wolves (Indian + Tibetan subspecies combined), many living in Gilgit-Baltistan and Khyber Pakhtunkhwa.',
+    title: 'Habitat Mapping',
+    text: 'Research efforts are underway to map and digitally monitor wildlife habitats using drone and satellite data.',
+    icon: 'map',
   },
   {
-    title: 'Markhor Recovery',
-    text: 'Over the past ~30 years, the markhor population in Pakistan has more than doubled from fewer than ~2,500 in the 1990s to 5,000–6,000 in recent estimates.',
+    title: 'Wildlife Awareness',
+    text: 'Public education programs are helping reduce human-wildlife conflict and improve species survival rates.',
+    icon: 'school',
   },
 ];
 
@@ -51,19 +53,15 @@ const getDailyFact = () => {
   return factsData[dayIndex % factsData.length];
 };
 
-const HomeScreen = () => {
-  const dailyFact = getDailyFact();
+const HomeScreenR = () => {
   const router = useRouter();
+  const dailyFact = getDailyFact();
 
-  // ✅ Sidebar animation
   const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  
-  // Profile image state
-  const [profileImage, setProfileImage] = useState(null);
-  const [totalReports, setTotalReports] = useState(0);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+  const [totalReports, setTotalReports] = useState(0);
 
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
@@ -73,29 +71,6 @@ const HomeScreen = () => {
       useNativeDriver: false,
     }).start();
     setSidebarOpen(!sidebarOpen);
-  };
-
-  // Load profile image from storage
-  const loadProfileImage = async () => {
-    try {
-      const savedProfileImage = await AsyncStorage.getItem('profileImage');
-      if (savedProfileImage) {
-        setProfileImage(savedProfileImage);
-      }
-    } catch (error) {
-      console.log('Error loading profile image:', error);
-    }
-  };
-
-  const loadReportCount = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/reports`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) setTotalReports(data.length);
-    } catch (e) {
-      // fail silently for count
-    }
   };
 
   const loadUserProfile = async () => {
@@ -121,48 +96,43 @@ const HomeScreen = () => {
     } catch (_) {}
   };
 
-  // Load profile image on component mount and when screen comes into focus
+  const loadReportCount = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/reports`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (Array.isArray(data)) setTotalReports(data.length);
+    } catch (_) {}
+  };
+
   useEffect(() => {
-    const ensureCommunityUser = async () => {
+    const ensureResearcher = async () => {
       try {
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
         const userType = await AsyncStorage.getItem('userType');
-        if (userType === 'researcher') {
-          router.replace('/(tabs)/HomeScreenR');
+        if (isLoggedIn !== 'true') {
+          router.replace('/(tabs)/Login');
+          return;
+        }
+        if (userType !== 'researcher') {
+          router.replace('/(tabs)/HomeScreen');
           return;
         }
       } catch (_) {
-        // Allow unauthenticated users to view Home
-        return;
+        router.replace('/(tabs)/Login');
       }
     };
-
-    ensureCommunityUser();
-    loadProfileImage();
-    loadReportCount();
+    ensureResearcher();
     loadUserProfile();
+    loadReportCount();
   }, []);
 
-  useFocusEffect(
-    React.useCallback(() => {
-      loadProfileImage();
-      loadReportCount();
-      loadUserProfile();
-    }, [])
-  );
-
   const handleLogout = async () => {
+    toggleSidebar();
     try {
-      // Clear all user data from AsyncStorage
       await AsyncStorage.multiRemove(['userId', 'username', 'userEmail', 'isLoggedIn', 'profileImage', 'userType']);
-      toggleSidebar();
-      // Navigate to Login screen and prevent going back
-      router.replace('/(tabs)/Login');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still navigate to login even if clearing storage fails
-      toggleSidebar();
-      router.replace('/(tabs)/Login');
-    }
+    } catch (_) {}
+    router.replace('/(tabs)/Login');
   };
 
   return (
@@ -173,20 +143,19 @@ const HomeScreen = () => {
           <Ionicons name="menu" size={26} color="#1a1a1a" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Community Portal</Text>
+      
+          <Text style={styles.headerTitle}>Research Portal</Text>
           <Text style={styles.headerSubtitle}>Wildlife Conservation</Text>
         </View>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/UserProfile')} style={styles.profileButton}>
-          {profileImage ? (
-            <Image source={{ uri: profileImage }} style={{ width: 32, height: 32, borderRadius: 16 }} />
-          ) : (
-            <Ionicons name="person-circle-outline" size={32} color="#2d6a4f" />
-          )}
+        <TouchableOpacity style={styles.profileButton}>
+          <Ionicons name="person-circle-outline" size={32} color="#2d6a4f" />
         </TouchableOpacity>
       </View>
 
-      {/* Main Content */}
-      <ScrollView contentContainerStyle={styles.container}>
+      <ScrollView 
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Daily Insight Card */}
         <View style={styles.factWrapper}>
           <LinearGradient
@@ -196,80 +165,68 @@ const HomeScreen = () => {
             style={styles.factContainer}
           >
             <View style={styles.factHeader}>
-              <Ionicons name="leaf" size={28} color="#FFD700" />
-              <Text style={styles.factBadge}>Fact of the Day</Text>
+              <Ionicons name={dailyFact.icon} size={28} color="#FFD700" />
+              <Text style={styles.factBadge}>Today's Insight</Text>
             </View>
             <Text style={styles.factTitle}>{dailyFact.title}</Text>
             <Text style={styles.factBody}>{dailyFact.text}</Text>
           </LinearGradient>
         </View>
 
-        {/* Quick Actions */}
+        {/* Quick Actions (trimmed) */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
-
           <View style={styles.actionCardsGrid}>
             <TouchableOpacity
               style={styles.actionCard}
               onPress={() => router.push('/(tabs)/ReportsFeed')}
               activeOpacity={0.7}
             >
-              <View style={[styles.actionIconContainer, { backgroundColor: '#e8f5e9' }]}>
-                <Ionicons name="document-text-outline" size={32} color="#2d6a4f" />
+              <View style={[styles.actionIconContainer, { backgroundColor: '#e8f5e9' }]}> 
+                <Ionicons name="analytics-outline" size={32} color="#2d6a4f" />
               </View>
-              <Text style={styles.actionCardTitle}>View Reports</Text>
-              <Text style={styles.actionCardSubtitle}>Community Feed</Text>
+              <Text style={styles.actionCardTitle}>Analyze</Text>
+              <Text style={styles.actionCardSubtitle}>Review Reports</Text>
             </TouchableOpacity>
-
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => console.log('View Map')}
+              onPress={() => console.log('Open Research Map')}
               activeOpacity={0.7}
             >
-              <View style={[styles.actionIconContainer, { backgroundColor: '#e3f2fd' }]}>
-                <MaterialCommunityIcons name="map" size={32} color="#1565c0" />
+              <View style={[styles.actionIconContainer, { backgroundColor: '#e3f2fd' }]}> 
+                <MaterialCommunityIcons name="map-search-outline" size={32} color="#1565c0" />
               </View>
-              <Text style={styles.actionCardTitle}>View Map</Text>
-              <Text style={styles.actionCardSubtitle}>Explore Sightings</Text>
+              <Text style={styles.actionCardTitle}>Map</Text>
+              <Text style={styles.actionCardSubtitle}>Research Areas</Text>
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* Upload New Report */}
+        {/* Analytics (no button) */}
         <View style={styles.section}>
-          <View style={styles.uploadSection}>
-            <Text style={styles.uploadTitle}>Upload new report</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/UploadReport')} style={styles.addButton}>
-              <Ionicons name="add-circle" size={36} color="#000" />
-            </TouchableOpacity>
+          <View style={styles.dashboardCard}>
+            <View style={styles.dashboardHeader}>
+              <View>
+                <Text style={styles.dashboardTitle}>Analytics</Text>
+                <Text style={styles.dashboardSubtitle}>Overview of reports</Text>
+              </View>
+            </View>
+            <View style={styles.statsRow}>
+              <View style={styles.statItem}>
+                <Ionicons name="document-text-outline" size={20} color="#2d6a4f" />
+                <Text style={styles.statNumber}>{totalReports}</Text>
+                <Text style={styles.statLabel}>Total Reports</Text>
+              </View>
+            </View>
           </View>
         </View>
 
-        {/* Analytics Section */}
-        <View style={styles.analyticsSection}>
-          <Text style={styles.analyticsTitle}>Analytics</Text>
-
-          <View style={styles.analyticsRow}>
-            <Text style={styles.analyticsLabel}>Total Reports</Text>
-            <Text style={styles.analyticsCount}>{totalReports}</Text>
-          </View>
-
-          <View style={styles.buttonWrapper}>
-            <TouchableOpacity
-              style={styles.viewReportsButton}
-              onPress={() => router.push("/(tabs)/ReportsHistory")}
-            >
-              <Ionicons name="document-text-outline" size={20} color="black" />
-              <Text style={styles.viewReportsButtonText}> My Reports</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
+        {/* Removed additional sections below to align with HomeScreen */}
       </ScrollView>
 
-      {/* --- Bottom Navigation Bar --- */}
       <BottomNav />
 
-      {/* ✅ Sidebar Overlay */}
+      {/* Sidebar Overlay */}
       {sidebarOpen && (
         <TouchableWithoutFeedback onPress={toggleSidebar}>
           <Animated.View 
@@ -281,17 +238,17 @@ const HomeScreen = () => {
                   outputRange: [0, 1],
                 }),
               },
-            ]}
+            ]} 
           />
         </TouchableWithoutFeedback>
       )}
 
-      {/* ✅ Sidebar Drawer */}
+      {/* Sidebar Drawer */}
       <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
         <View style={styles.sidebarHeader}>
           <View style={styles.sidebarProfile}>
-            <Ionicons name="person-circle" size={60} color="#2d6a4f" />
-            <Text style={styles.sidebarName}>{username || 'Community User'}</Text>
+         
+            <Text style={styles.sidebarName}>{username || 'Researcher'}</Text>
             <Text style={styles.sidebarEmail}>{email || ''}</Text>
           </View>
         </View>
@@ -307,23 +264,12 @@ const HomeScreen = () => {
             <View style={styles.sidebarIconWrapper}>
               <Ionicons name="document-text-outline" size={22} color="#2d6a4f" />
             </View>
-            <Text style={styles.sidebarText}>Reports History</Text>
+            <Text style={styles.sidebarText}>Check Surveys</Text>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.sidebarItem}
-            onPress={() => {
-              toggleSidebar();
-             router.push('/(tabs)/AwardsScreen');
-            }}
-          >
-            <View style={styles.sidebarIconWrapper}>
-              <Ionicons name="chatbubble-outline" size={22} color="#2d6a4f" />
-            </View>
-            <Text style={styles.sidebarText}>Awards & Badges</Text>
-            <Ionicons name="chevron-forward" size={20} color="#999" />
-          </TouchableOpacity>
+         
+                     
 
           <TouchableOpacity
             style={styles.sidebarItem}
@@ -354,9 +300,15 @@ const HomeScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#f2f2f2' },
-  container: { paddingBottom: 80 },
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: '#f8f9fa',
+  },
+  container: { 
+    paddingBottom: 100,
+  },
 
+  // Header
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -393,6 +345,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+
+  // Fact Card
   factWrapper: {
     paddingHorizontal: 20,
     paddingTop: 20,
@@ -431,16 +385,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
 
-  uploadSection: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 15,
-  },
-  uploadTitle: { fontSize: 18, fontWeight: '600', color: '#000' },
-  addButton: { padding: 5 },
-
+  // Sections
   section: {
     paddingHorizontal: 20,
     marginTop: 28,
@@ -451,6 +396,8 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
     marginBottom: 16,
   },
+
+  // Action Cards Grid
   actionCardsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -487,47 +434,63 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
-  analyticsSection: {
-    marginHorizontal: 15,
-    padding: 15,
+  // Dashboard Card
+  dashboardCard: {
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 16,
+    padding: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 3,
   },
-  analyticsTitle: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
-  analyticsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  analyticsLabel: { fontSize: 16, color: '#555' },
-  analyticsCount: { fontSize: 20, fontWeight: '600', color: '#333' },
-
-  buttonWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 5,
-  },
-
-  viewReportsButton: {
+  dashboardHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFD700',
-    padding: 15,
-    margin: 15,
-    borderRadius: 10,
-    width: '100%',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
-  
-  viewReportsButtonText: {
-    color: 'black',
-    fontSize: 16,
+  dashboardTitle: {
+    fontSize: 18,
     fontWeight: '700',
-    marginLeft: 8,
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  dashboardSubtitle: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+    maxWidth: '80%',
   },
 
-  // ✅ Sidebar styles
+  // Stats Row
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+  },
+  statItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#666',
+  },
+
+  // Sidebar
   overlay: {
     position: 'absolute',
     top: 0,
@@ -605,4 +568,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default HomeScreenR;

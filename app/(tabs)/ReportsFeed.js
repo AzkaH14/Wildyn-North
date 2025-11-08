@@ -17,8 +17,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useRouter, useFocusEffect } from "expo-router";
 import BottomNav from "../../components/BottomNav";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import KeyboardAwareContainer from "../../components/KeyboardAwareContainer";
 
-const API_URL = 'http://172.21.247.100:5000'; // backend URL
+const API_URL = 'http://192.168.18.25:5000'; // backend URL
 
 const offensiveWords = ["badword", "ugly", "offensive"];
 
@@ -179,16 +180,25 @@ const ReportsFeed = () => {
   }, [searchText, reports]);
 
   return (
+    
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.topBar}>
-        <Text style={styles.topTitle}>Community Reports</Text>
-        <TouchableOpacity onPress={() => router.push("/(tabs)/ReportsHistory")}>
-          <Ionicons name="document-text-outline" size={22} color="#000" />
+      <KeyboardAwareContainer>
+      {/* Header aligned with HomeScreen style */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.menuButton}>
+          <Ionicons name="arrow-back" size={22} color="#1a1a1a" />
+        </TouchableOpacity>
+        <View style={styles.headerCenter}>
+          <Text style={styles.headerTitle}>Reports Feed</Text>
+          <Text style={styles.headerSubtitle}>Community Insights</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push("/(tabs)/ReportsHistory")} style={styles.profileButton}>
+          <Ionicons name="document-text-outline" size={22} color="#000000ff" />
         </TouchableOpacity>
       </View>
 
       <View style={styles.searchBar}>
-        <Ionicons name="search-outline" size={18} color="#555" />
+        <Ionicons name="search-outline" size={18} color="#777" />
         <TextInput
           style={styles.searchInput}
           placeholder="Search animal species..."
@@ -207,7 +217,7 @@ const ReportsFeed = () => {
           </View>
         ) : error ? (
           <View style={styles.centerContainer}>
-            <Ionicons name="alert-circle-outline" size={48} color="#ff6b6b" />
+            <Ionicons name="alert-circle-outline" size={48} color="#c62828" />
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity
               style={styles.retryButton}
@@ -240,7 +250,7 @@ const ReportsFeed = () => {
             }
             renderItem={({ item }) => (
             <View style={styles.card}>
-              <View style={styles.header}>
+              <View style={styles.cardHeader}>
                 <Image
                   source={{
                     uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
@@ -278,7 +288,7 @@ const ReportsFeed = () => {
               <Text style={styles.commentTitle}>Comments</Text>
               {/* Pinned comment at top */}
               {item.pinnedComment && (
-                <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}>
+                <View style={[styles.commentItem, { backgroundColor: "#fff7da" }]}> 
                   <Ionicons name="pin" size={18} color="grey" />
                   <View style={{ marginLeft: 8, flex: 1 }}>
                     <Text style={styles.commentUser}>
@@ -311,7 +321,7 @@ const ReportsFeed = () => {
     onPress={() => handleAddComment(item._id)}
     style={styles.sendBtn}
   >
-    <Ionicons name="send" size={18} color="#fff" />
+    <Ionicons name="send" size={20} color="#1a5f3a" />
   </TouchableOpacity>
 </View>
 
@@ -343,7 +353,9 @@ const ReportsFeed = () => {
       </KeyboardAvoidingView>
 
       <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
+         </KeyboardAwareContainer>
       </SafeAreaView>
+     
   );
 };
 
@@ -353,41 +365,71 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#f9f9f9' },
   wrapper: { flex: 1, backgroundColor: "#f9f9f9" },
   container: { flex: 1 },
-  topBar: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
   },
-  topTitle: { fontSize: 20, fontWeight: "600", color: "#000" },
+  menuButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerCenter: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '700', 
+    color: '#1a1a1a',
+  },
+  headerSubtitle: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+  },
+  profileButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   searchBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#eee",
-    margin: 10,
-    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f4f4f4ff',
+    margin: 12,
+    paddingHorizontal: 12,
     borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#d6d9d78a',
   },
-  searchInput: { flex: 1, padding: 8, marginLeft: 5 },
+  searchInput: { flex: 1, padding: 10, marginLeft: 6, color: '#1a1a1a' },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: '#fff',
     marginBottom: 15,
-    borderRadius: 10,
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 5,
-    elevation: 2,
+    borderRadius: 12,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
-  header: { flexDirection: "row", alignItems: "center", padding: 10 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', padding: 12 },
   profile: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
   username: { fontWeight: "700" },
   location: { fontSize: 12, color: "#777" },
   locationRow: { flexDirection: "row", alignItems: "center", marginTop: 2 },
   timestamp: { fontSize: 12, color: "#777" },
-  image: { width: "100%", height: 500 },
+  image: { width: '100%', height: 420 },
   caption: { paddingHorizontal: 12, paddingVertical: 8 },
   commentTitle: {
     fontSize: 15,
@@ -396,18 +438,28 @@ const styles = StyleSheet.create({
     marginTop: 6,
   },
   commentInputBox: {
-    flexDirection: "row",
-    backgroundColor: "#f1f1f1",
-    margin: 10,
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    margin: 12,
     borderRadius: 25,
-    paddingHorizontal: 10,
-    alignItems: "center",
+    paddingLeft: 16,
+    paddingVertical: 4,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#e0e0e0',
   },
-  commentInput: { flex: 1, padding: 8 },
+  commentInput: { 
+    flex: 1, 
+    padding: 10,
+    fontSize: 15,
+    color: '#1a1a1a',
+  },
   sendBtn: {
-    backgroundColor: "#000",
-    padding: 12,
-    borderRadius: 20,
+    backgroundColor: 'transparent',
+    padding: 10,
+    paddingRight: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   commentItem: {
     flexDirection: "row",
@@ -418,13 +470,6 @@ const styles = StyleSheet.create({
   },
   commentUser: { fontWeight: "700" },
   commentText: { color: "#333", marginTop: 2 },
-
-  sendBtn: {
-    backgroundColor: "#000",
-    padding: 12,
-    borderRadius: 20,
-    size:10,
-  },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
@@ -444,7 +489,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   retryButton: {
-    backgroundColor: '#000',
+    backgroundColor: '#FFD700',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 8,

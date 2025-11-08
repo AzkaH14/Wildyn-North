@@ -1,30 +1,31 @@
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'expo-router';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  TextInput,
-  Alert,
-  Dimensions,
-  Modal,
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  Image, 
+  TextInput, 
+  Alert, 
+  Dimensions, 
+  Modal, 
   ActivityIndicator,
+  StatusBar
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
+import { useRouter } from 'expo-router';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'http://172.21.247.100:5000'; // Update with your backend IP
+const API_URL = 'http://192.168.18.25:5000'; // Update with your backend IP
 
 const UserProfile = () => {
   const router = useRouter();
-  
-  // Profile data state
+
   const [profileData, setProfileData] = useState({
     profileImage: null,
     username: '',
@@ -32,11 +33,10 @@ const UserProfile = () => {
     password: '••••••••',
   });
 
-  // Edit mode state
   const [isEditMode, setIsEditMode] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [imagePickerModal, setImagePickerModal] = useState(false);
 
-  // Edit form state
   const [editForm, setEditForm] = useState({
     profileImage: null,
     username: '',
@@ -45,70 +45,32 @@ const UserProfile = () => {
     confirmPassword: '',
   });
 
-  // Image picker modal state
-  const [imagePickerModal, setImagePickerModal] = useState(false);
-
-  // Load profile data from storage and backend on component mount
   useEffect(() => {
     loadProfileData();
   }, []);
 
-  // Load profile data from AsyncStorage and backend
   const loadProfileData = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
       const savedProfileImage = await AsyncStorage.getItem('profileImage');
-      
-      // Load profile image from storage
+
       if (savedProfileImage) {
-        setProfileData(prev => ({
-          ...prev,
-          profileImage: savedProfileImage,
-        }));
+        setProfileData(prev => ({ ...prev, profileImage: savedProfileImage }));
       }
 
-      // Fetch user data from backend
       if (userId) {
-        try {
-          const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
-          const result = await response.json();
+        const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
+        const result = await response.json();
 
-          if (response.ok && result.user) {
-            setProfileData(prev => ({
-              ...prev,
-              username: result.user.username || prev.username,
-              email: result.user.email || prev.email,
-            }));
+        if (response.ok && result.user) {
+          setProfileData({
+            ...profileData,
+            username: result.user.username || '',
+            email: result.user.email || '',
+          });
 
-            // Update AsyncStorage with latest data
-            await AsyncStorage.setItem('username', result.user.username || '');
-            await AsyncStorage.setItem('userEmail', result.user.email || '');
-          }
-        } catch (apiError) {
-          console.log('Error fetching profile from backend:', apiError);
-          // Fallback to AsyncStorage if backend fails
-          const savedUsername = await AsyncStorage.getItem('username');
-          const savedEmail = await AsyncStorage.getItem('userEmail');
-          
-          if (savedUsername || savedEmail) {
-            setProfileData(prev => ({
-              ...prev,
-              username: savedUsername || prev.username,
-              email: savedEmail || prev.email,
-            }));
-          }
-        }
-      } else {
-        // Fallback to AsyncStorage if no userId
-        const savedUsername = await AsyncStorage.getItem('username');
-        const savedEmail = await AsyncStorage.getItem('userEmail');
-        
-        if (savedUsername || savedEmail) {
-          setProfileData(prev => ({
-            ...prev,
-            username: savedUsername || prev.username,
-            email: savedEmail || prev.email,
-          }));
+          await AsyncStorage.setItem('username', result.user.username || '');
+          await AsyncStorage.setItem('userEmail', result.user.email || '');
         }
       }
     } catch (error) {
@@ -116,618 +78,558 @@ const UserProfile = () => {
     }
   };
 
-  // Initialize edit form with current profile data
-  useEffect(() => {
-    if (isEditMode) {
-      setEditForm({
-        profileImage: profileData.profileImage,
-        username: profileData.username,
-        email: profileData.email,
-        password: '',
-        confirmPassword: '',
-      });
-    }
-  }, [isEditMode]);
-
-  // Request camera and media library permissions
   const requestPermissions = async () => {
     const { status: cameraStatus } = await ImagePicker.requestCameraPermissionsAsync();
     const { status: mediaStatus } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
     if (cameraStatus !== 'granted' || mediaStatus !== 'granted') {
-      Alert.alert('Permission Required', 'Camera and media library permissions are required to update your profile picture.');
+      Alert.alert('Permission Required', 'Camera and media library permissions are required.');
       return false;
     }
     return true;
   };
 
-  // Handle image selection from camera
-  const handleCameraCapture = async () => {
-    const hasPermission = await requestPermissions();
-    if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchCameraAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setEditForm(prev => ({
-          ...prev,
-          profileImage: result.assets[0].uri,
-        }));
-        setImagePickerModal(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to capture image');
-    }
-  };
-
-  // Handle image selection from gallery
   const handleGallerySelection = async () => {
     const hasPermission = await requestPermissions();
     if (!hasPermission) return;
-
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
-      });
-
-      if (!result.canceled) {
-        setEditForm(prev => ({
-          ...prev,
-          profileImage: result.assets[0].uri,
-        }));
-        setImagePickerModal(false);
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Failed to select image');
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setEditForm(prev => ({ ...prev, profileImage: result.assets[0].uri }));
+      setImagePickerModal(false);
     }
   };
 
-  // Validate form data
-  const validateForm = () => {
-    if (!editForm.username.trim()) {
-      Alert.alert('Validation Error', 'Username is required');
-      return false;
+  const handleCameraCapture = async () => {
+    const hasPermission = await requestPermissions();
+    if (!hasPermission) return;
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setEditForm(prev => ({ ...prev, profileImage: result.assets[0].uri }));
+      setImagePickerModal(false);
     }
-    
-    if (!editForm.email.trim()) {
-      Alert.alert('Validation Error', 'Email is required');
-      return false;
-    }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(editForm.email)) {
-      Alert.alert('Validation Error', 'Please enter a valid email address');
-      return false;
-    }
-    
-    if (editForm.password && editForm.password.length < 6) {
-      Alert.alert('Validation Error', 'Password must be at least 6 characters long');
-      return false;
-    }
-    
-    if (editForm.password !== editForm.confirmPassword) {
-      Alert.alert('Validation Error', 'Passwords do not match');
-      return false;
-    }
-    
-    return true;
   };
 
-  // Handle update profile
+  const handleEditMode = () => {
+    setEditForm({
+      profileImage: profileData.profileImage,
+      username: profileData.username,
+      email: profileData.email,
+      password: '',
+      confirmPassword: '',
+    });
+    setIsEditMode(true);
+  };
+
   const handleUpdateProfile = async () => {
-    if (!validateForm()) return;
+    // Validation
+    if (!editForm.username.trim()) {
+      Alert.alert('Error', 'Username is required');
+      return;
+    }
+    if (!editForm.email.trim()) {
+      Alert.alert('Error', 'Email is required');
+      return;
+    }
+    if (editForm.password && editForm.password !== editForm.confirmPassword) {
+      Alert.alert('Error', 'Passwords do not match');
+      return;
+    }
 
     setIsLoading(true);
-    
     try {
       const userId = await AsyncStorage.getItem('userId');
-      
       if (!userId) {
-        Alert.alert('Error', 'User not logged in. Please login again.');
-        setIsLoading(false);
+        Alert.alert('Error', 'User not logged in');
         return;
       }
 
-      // Prepare update data
       const updateData = {
         username: editForm.username.trim(),
-        email: editForm.email.trim().toLowerCase(),
+        email: editForm.email.trim(),
       };
 
-      // Include password only if provided
-      if (editForm.password && editForm.password.trim()) {
-        updateData.password = editForm.password.trim();
-      }
+      if (editForm.password) updateData.password = editForm.password;
 
-      // Call backend API to update profile
       const response = await fetch(`${API_URL}/api/auth/profile/${userId}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
       });
 
       const result = await response.json();
 
       if (response.ok) {
-        // Save to AsyncStorage
+        await AsyncStorage.setItem('username', result.user.username);
+        await AsyncStorage.setItem('userEmail', result.user.email);
         if (editForm.profileImage) {
           await AsyncStorage.setItem('profileImage', editForm.profileImage);
         }
-        await AsyncStorage.setItem('username', result.user.username);
-        await AsyncStorage.setItem('userEmail', result.user.email);
-        
-        // Update profile data
+
         setProfileData({
           profileImage: editForm.profileImage || profileData.profileImage,
           username: result.user.username,
           email: result.user.email,
           password: editForm.password ? '••••••••' : profileData.password,
         });
-        
+
         setIsEditMode(false);
         Alert.alert('Success', 'Profile updated successfully!');
       } else {
-        Alert.alert('Error', result.message || 'Failed to update profile. Please try again.');
+        Alert.alert('Error', result.message || 'Failed to update profile');
       }
     } catch (error) {
-      console.error('Update profile error:', error);
-      Alert.alert('Connection Error', 'Could not connect to server. Please check your connection and try again.');
+      Alert.alert('Error', 'Unable to connect to the server');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle cancel edit
-  const handleCancelEdit = () => {
-    setIsEditMode(false);
-    setEditForm({
-      profileImage: null,
-      username: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
-    });
-  };
-
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>User Profile</Text>
-        <View style={styles.headerSpacer} />
-      </View>
+    <KeyboardAwareContainer>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar hidden={false} backgroundColor="#fff" barStyle="dark-content" />
 
-      <ScrollView contentContainerStyle={styles.container}>
-        {!isEditMode ? (
-          // Profile Display Mode
-          <View style={styles.profileContainer}>
-            {/* Profile Picture */}
-            <View style={styles.profileImageContainer}>
-              {profileData.profileImage ? (
-                <Image source={{ uri: profileData.profileImage }} style={styles.profileImage} />
-              ) : (
-                <View style={styles.profileImagePlaceholder}>
-                  <Ionicons name="person" size={60} color="#666" />
-                </View>
-              )}
-            </View>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.backButton}>
+            <Ionicons name="arrow-back" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>User Profile</Text>
+          <View style={styles.headerSpacer} />
+        </View>
 
-            {/* Profile Details */}
-            <View style={styles.detailsContainer}>
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Username</Text>
-                <Text style={styles.detailValue}>{profileData.username}</Text>
-              </View>
-              
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Email</Text>
-                <Text style={styles.detailValue}>{profileData.email}</Text>
-              </View>
-              
-              <View style={styles.detailRow}>
-                <Text style={styles.detailLabel}>Password</Text>
-                <Text style={styles.detailValue}>{profileData.password}</Text>
-              </View>
-            </View>
-
-            {/* Edit Profile Button */}
-            <TouchableOpacity 
-              style={styles.editButton}
-              onPress={() => setIsEditMode(true)}
-            >
-              <Ionicons name="create-outline" size={20} color="#black" />
-              <Text style={styles.editButtonText}>Edit Profile</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          // Edit Profile Mode
-          <View style={styles.editContainer}>
-            {/* Profile Picture Edit */}
-            <View style={styles.profileImageEditContainer}>
-              <TouchableOpacity 
-                style={styles.profileImageEdit}
-                onPress={() => setImagePickerModal(true)}
-              >
-                {editForm.profileImage ? (
-                  <Image source={{ uri: editForm.profileImage }} style={styles.profileImage} />
+        <ScrollView contentContainerStyle={styles.container}>
+          {!isEditMode ? (
+            <View style={styles.profileContainer}>
+              {/* Profile Picture */}
+              <View style={styles.profileImageContainer}>
+                {profileData.profileImage ? (
+                  <Image source={{ uri: profileData.profileImage }} style={styles.profileImage} />
                 ) : (
                   <View style={styles.profileImagePlaceholder}>
-                    <Ionicons name="person" size={60} color="#666" />
+                    <Ionicons name="person" size={60} color="#999" />
                   </View>
                 )}
-                <View style={styles.editImageOverlay}>
-                  <Ionicons name="camera" size={24} color="#fff" />
+              </View>
+
+              {/* Profile Details */}
+              <View style={styles.detailsContainer}>
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Username</Text>
+                  <Text style={styles.detailValue}>{profileData.username}</Text>
                 </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Email</Text>
+                  <Text style={styles.detailValue}>{profileData.email}</Text>
+                </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Password</Text>
+                  <Text style={styles.detailValue}>{profileData.password}</Text>
+                </View>
+              </View>
+
+              {/* Edit Button */}
+              <TouchableOpacity style={styles.editButton} onPress={handleEditMode}>
+                <Ionicons name="create-outline" size={20} color="#000000ff" />
+                <Text style={styles.editButtonText}>Edit Profile</Text>
               </TouchableOpacity>
-              <Text style={styles.editImageText}>Tap to change photo</Text>
             </View>
-
-            {/* Edit Form */}
-            <View style={styles.formContainer}>
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Username</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editForm.username}
-                  onChangeText={(text) => setEditForm(prev => ({ ...prev, username: text }))}
-                  placeholder="Enter username"
-                />
+          ) : (
+            <View style={styles.editContainer}>
+              {/* Editable Profile Picture */}
+              <View style={styles.profileImageEditContainer}>
+                <TouchableOpacity onPress={() => setImagePickerModal(true)} activeOpacity={0.8}>
+                  {editForm.profileImage ? (
+                    <Image source={{ uri: editForm.profileImage }} style={styles.profileImage} />
+                  ) : (
+                    <View style={styles.profileImagePlaceholder}>
+                      <Ionicons name="person" size={60} color="#999" />
+                    </View>
+                  )}
+                  {/* Camera icon badge */}
+                  <View style={styles.cameraIconBadge}>
+                    <Ionicons name="camera" size={18} color="#fff" />
+                  </View>
+                </TouchableOpacity>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Email</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editForm.email}
-                  onChangeText={(text) => setEditForm(prev => ({ ...prev, email: text }))}
-                  placeholder="Enter email"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+              {/* Edit Fields */}
+              <View style={styles.formContainer}>
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Username</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.username}
+                    onChangeText={(text) => setEditForm({ ...editForm, username: text })}
+                    placeholder="Enter username"
+                    placeholderTextColor="#999"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Email</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.email}
+                    onChangeText={(text) => setEditForm({ ...editForm, email: text })}
+                    placeholder="Enter email"
+                    placeholderTextColor="#999"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>New Password </Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.password}
+                    onChangeText={(text) => setEditForm({ ...editForm, password: text })}
+                    placeholder="Enter new password"
+                    placeholderTextColor="#999"
+                    secureTextEntry
+                  />
+                </View>
+
+                <View style={styles.inputGroup}>
+                  <Text style={styles.inputLabel}>Confirm Password</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    value={editForm.confirmPassword}
+                    onChangeText={(text) => setEditForm({ ...editForm, confirmPassword: text })}
+                    placeholder="Confirm new password"
+                    placeholderTextColor="#999"
+                    secureTextEntry
+                  />
+                </View>
               </View>
 
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>New Password</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editForm.password}
-                  onChangeText={(text) => setEditForm(prev => ({ ...prev, password: text }))}
-                  placeholder="Enter new password"
-                  secureTextEntry
-                />
-              </View>
-
-              <View style={styles.inputGroup}>
-                <Text style={styles.inputLabel}>Confirm Password</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={editForm.confirmPassword}
-                  onChangeText={(text) => setEditForm(prev => ({ ...prev, confirmPassword: text }))}
-                  placeholder="Confirm new password"
-                  secureTextEntry
-                />
+              {/* Buttons */}
+              <View style={styles.actionButtonsContainer}>
+                <TouchableOpacity 
+                  style={styles.cancelButton} 
+                  onPress={() => setIsEditMode(false)}
+                  disabled={isLoading}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.updateButton} 
+                  onPress={handleUpdateProfile}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Ionicons name="checkmark-circle" size={20} color="#000000ff" />
+                      <Text style={styles.updateButtonText}>Update Profile</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
               </View>
             </View>
+          )}
+        </ScrollView>
 
-            {/* Action Buttons */}
-            <View style={styles.actionButtonsContainer}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={handleCancelEdit}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
+        {/* Image Picker Modal */}
+        <Modal
+          visible={imagePickerModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setImagePickerModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Choose Profile Picture</Text>
               
+              <TouchableOpacity style={styles.modalOption} onPress={handleCameraCapture}>
+                <Ionicons name="camera" size={24} color="#1a5f3a" />
+                <Text style={styles.modalOptionText}>Take Photo</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.modalOption} onPress={handleGallerySelection}>
+                <Ionicons name="images" size={24} color="#1a5f3a" />
+                <Text style={styles.modalOptionText}>Choose from Gallery</Text>
+              </TouchableOpacity>
+
               <TouchableOpacity 
-                style={[styles.updateButton, isLoading && styles.updateButtonDisabled]}
-                onPress={handleUpdateProfile}
-                disabled={isLoading}
+                style={styles.modalCancelButton} 
+                onPress={() => setImagePickerModal(false)}
               >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="checkmark" size={20} color="black" />
-                    <Text style={styles.updateButtonText}>Update Data</Text>
-                  </>
-                )}
+                <Text style={styles.modalCancelText}>Cancel</Text>
               </TouchableOpacity>
             </View>
           </View>
-        )}
-      </ScrollView>
-
-      {/* Image Picker Modal */}
-      <Modal
-        visible={imagePickerModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setImagePickerModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContainer}>
-            <Text style={styles.modalTitle}>Select Profile Picture</Text>
-            
-            <TouchableOpacity 
-              style={styles.modalOption}
-              onPress={handleCameraCapture}
-            >
-              <Ionicons name="camera" size={24} color="#000" />
-              <Text style={styles.modalOptionText}>Take Photo</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalOption}
-              onPress={handleGallerySelection}
-            >
-              <Ionicons name="images" size={24} color="#000" />
-              <Text style={styles.modalOptionText}>Choose from Gallery</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={styles.modalCancel}
-              onPress={() => setImagePickerModal(false)}
-            >
-              <Text style={styles.modalCancelText}>Cancel</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-    </SafeAreaView>
+        </Modal>
+      </SafeAreaView>
+    </KeyboardAwareContainer>
   );
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: '#f2f2f2',
+  safeArea: { 
+    flex: 1, 
+    backgroundColor: '#f8f9fa' 
   },
-  container: {
-    flexGrow: 1,
-    paddingBottom: 20,
+  container: { 
+    flexGrow: 1, 
+    paddingBottom: 20 
   },
-  
-  // Header styles
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 15,
-    paddingVertical: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#e8e8e8',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
   },
-  backButton: {
-    padding: 5,
+  backButton: { 
+    padding: 5 
   },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    flex: 1,
-    textAlign: 'center',
+  headerTitle: { 
+    fontSize: 18, 
+    fontWeight: '600', 
+    color: '#1a1a1a', 
+    flex: 1, 
+    textAlign: 'center' 
   },
-  headerSpacer: {
-    width: 34, // Same width as back button for centering
+  headerSpacer: { 
+    width: 34 
   },
-
-  // Profile display styles
-  profileContainer: {
-    alignItems: 'center',
-    padding: 20,
+  profileContainer: { 
+    alignItems: 'center', 
+    padding: 24 
   },
-  profileImageContainer: {
-    marginBottom: 30,
+  profileImageContainer: { 
+    marginBottom: 32,
+    marginTop: 16,
   },
-  profileImage: {
-    width: 120,
-    height: 120,
+  profileImage: { 
+    width: 120, 
+    height: 120, 
     borderRadius: 60,
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   profileImagePlaceholder: {
     width: 120,
     height: 120,
     borderRadius: 60,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: '#e8e8e8',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 3,
+    borderColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
   },
   detailsContainer: {
     width: '100%',
     backgroundColor: '#fff',
-    borderRadius: 10,
+    borderRadius: 12,
     padding: 20,
-    marginBottom: 30,
+    marginBottom: 24,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 2,
   },
   detailRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 15,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
-  detailLabel: {
-    fontSize: 16,
-    fontWeight: '500',
+  detailLabel: { 
+    fontSize: 13, 
+    fontWeight: '500', 
     color: '#666',
+    marginBottom: 6,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  detailValue: {
-    fontSize: 16,
-    color: '#000',
-    flex: 1,
-    textAlign: 'right',
+  detailValue: { 
+    fontSize: 16, 
+    color: '#1a1a1a',
+    fontWeight: '500',
   },
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#FFD700',
-    padding: 15,
-    margin: 15,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
     borderRadius: 10,
     width: '100%',
+    
   },
-  editButtonText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 8,
+  editButtonText: { 
+    color: '#000000ff', 
+    fontSize: 16, 
+    fontWeight: '600', 
+    marginLeft: 8 
   },
-
-  // Edit profile styles
-  editContainer: {
-    padding: 20,
+  editContainer: { 
+    padding: 24 
   },
   profileImageEditContainer: {
     alignItems: 'center',
-    marginBottom: 30,
+    marginBottom: 32,
+    marginTop: 16,
   },
-  profileImageEdit: {
-    position: 'relative',
-    marginBottom: 10,
-  },
-  editImageOverlay: {
+  cameraIconBadge: {
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#007AFF',
-    borderRadius: 15,
-    width: 30,
-    height: 30,
+    backgroundColor: '#1a5f3a',
+    borderRadius: 20,
+    width: 36,
+    height: 36,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  editImageText: {
-    fontSize: 14,
-    color: '#666',
-  },
-  formContainer: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    marginBottom: 30,
+    borderWidth: 3,
+    borderColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.2,
     shadowRadius: 4,
-    elevation: 3,
+    elevation: 5,
+  },
+  formContainer: {
+    marginBottom: 24,
   },
   inputGroup: {
     marginBottom: 20,
   },
   inputLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#444',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
+    borderColor: '#e0e0e0',
+    borderRadius: 10,
+    padding: 14,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+    backgroundColor: '#fff',
+    color: '#1a1a1a',
   },
-  actionButtonsContainer: {
-    flexDirection: 'row',
+  actionButtonsContainer: { 
+    flexDirection: 'row', 
     justifyContent: 'space-between',
-    paddingHorizontal: 10,
+    gap: 12,
   },
   cancelButton: {
     flex: 1,
     backgroundColor: '#f0f0f0',
-    paddingVertical: 15,
+    paddingVertical: 14,
     borderRadius: 10,
-    marginRight: 10,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#666',
+  cancelButtonText: { 
+    color: '#666', 
+    fontWeight: '600',
+    fontSize: 15,
   },
   updateButton: {
     flex: 1,
     backgroundColor: '#FFD700',
-    paddingVertical: 15,
+    paddingVertical: 14,
     borderRadius: 10,
-    marginLeft: 10,
-    flexDirection: 'row',
     alignItems: 'center',
+    flexDirection: 'row',
     justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  updateButtonDisabled: {
-    backgroundColor: '#ccc',
+  updateButtonText: { 
+    color: '#000000ff', 
+    fontWeight: '600', 
+    fontSize: 15,
+    marginLeft: 6,
   },
-  updateButtonText: {
-    color: 'black',
-    fontSize: 16,
-    fontWeight: '700',
-    marginLeft: 8,
-  },
-
-  // Modal styles
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
+  modalContent: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 20,
-    width: width * 0.8,
-    maxWidth: 300,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 24,
+    paddingBottom: 32,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '600',
-    textAlign: 'center',
+    color: '#1a1a1a',
     marginBottom: 20,
+    textAlign: 'center',
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    padding: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 10,
+    marginBottom: 12,
   },
   modalOptionText: {
     fontSize: 16,
-    marginLeft: 15,
-    color: '#000',
+    color: '#1a1a1a',
+    marginLeft: 16,
+    fontWeight: '500',
   },
-  modalCancel: {
-    paddingVertical: 15,
+  modalCancelButton: {
+    padding: 16,
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: 8,
   },
   modalCancelText: {
     fontSize: 16,
     color: '#666',
+    fontWeight: '600',
   },
 });
 

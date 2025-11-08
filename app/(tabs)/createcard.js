@@ -27,6 +27,7 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
     habitat: '',
     distribution: '',
     conservationStatus: '',
+    conservationGuide: '',
     imageUri: '',
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -99,6 +100,10 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
     setImagePickerModal(true);
   };
 
+  const handleBackPress = () => {
+    router.push('/(tabs)/ResearcherHub');
+  };
+
   const handleSubmit = async () => {
     if (!formData.commonName || !formData.scientificName) {
       Alert.alert('Error', 'Please fill in at least Common Name and Scientific Name');
@@ -144,8 +149,8 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Ionicons name="arrow-back" size={24} color="#000" />
+        <TouchableOpacity onPress={handleBackPress}>
+        <Ionicons name="arrow-back" size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Create Species Card</Text>
         <View style={{ width: 24 }} />
@@ -258,6 +263,22 @@ export const CreateSpeciesCardScreen = ({ navigation }) => {
               placeholderTextColor="#999"
             />
           </View>
+
+          {/* 🆕 Conservation Guide */}
+         <View style={styles.inputGroup}>
+  <Text style={styles.label}>Conservation Guide</Text>
+  <TextInput
+    style={[styles.input, styles.textArea]}
+    placeholder="Describe conservation efforts, protection tips, or actions to help preserve this species..."
+    value={formData.conservationGuide}
+    onChangeText={(text) => handleInputChange('conservationGuide', text)}
+    multiline
+    numberOfLines={4}
+    textAlignVertical="top"
+    placeholderTextColor="#999"
+  />
+</View>
+
         </View>
 
         {/* Submit Button */}

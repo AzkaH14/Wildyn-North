@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   RefreshControl,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useFocusEffect } from 'expo-router';
@@ -18,34 +19,36 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // SpeciesCard component for navigation
 const SpeciesCard = ({ species, onPress }) => {
   return (
-    <TouchableOpacity 
-      style={styles.card} 
-      onPress={onPress} 
-      activeOpacity={0.7}
-    >
-      <Image 
-        source={{ uri: species.imageUri || 'https://via.placeholder.com/400x300' }} 
-        style={styles.image} 
-      />
-      <View style={styles.cardContent}>
-        <Text style={styles.name}>{species.commonName}</Text>
-        {species.scientificName && (
-          <Text style={styles.scientificName}>{species.scientificName}</Text>
-        )}
-        {species.urduName && (
-          <Text style={styles.urduName}>{species.urduName}</Text>
-        )}
-        {species.conservationStatus && (
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{species.conservationStatus}</Text>
+    <View style={styles.cardContainer}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={onPress} 
+        activeOpacity={0.7}
+      >
+        <Image 
+          source={{ uri: species.imageUri || 'https://via.placeholder.com/400x300' }} 
+          style={styles.image} 
+        />
+        <View style={styles.cardContent}>
+          <Text style={styles.name}>{species.commonName}</Text>
+          {species.scientificName && (
+            <Text style={styles.scientificName}>{species.scientificName}</Text>
+          )}
+          {species.urduName && (
+            <Text style={styles.urduName}>{species.urduName}</Text>
+          )}
+          {species.conservationStatus && (
+            <View style={styles.statusBadge}>
+              <Text style={styles.statusText}>{species.conservationStatus}</Text>
+            </View>
+          )}
+          <View style={styles.viewMore}>
+            <Text style={styles.viewMoreText}>View Details</Text>
+            <Ionicons name="arrow-forward" size={16} color="#FFD700" />
           </View>
-        )}
-        <View style={styles.viewMore}>
-          <Text style={styles.viewMoreText}>View Details</Text>
-          <Ionicons name="arrow-forward" size={16} color="#FFD700" />
         </View>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 };
 
@@ -87,20 +90,20 @@ export default function WildlifeLibrary() {
     loadWildlifeData();
   };
 
-
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-          <View style={{ width: 24 }} />
-          <Text style={styles.headerTitle}>Wildlife Library</Text>
           <TouchableOpacity 
-            onPress={() => router.push('/(tabs)/createcard')}
-            style={styles.addButtonHeader}
+            onPress={() => router.push('/(tabs)/HomeScreen')} // 🟡 updated navigation
+            style={styles.backButton}
           >
-            <Ionicons name="add" size={28} color="#000" />
+            <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Wildlife Library</Text>
+          {/* Removed Add button */}
+          <View style={{ width: 40 }} /> 
         </View>
 
         <ScrollView 
@@ -121,13 +124,6 @@ export default function WildlifeLibrary() {
             <Text style={styles.emptyText}>
               No wildlife information has been uploaded yet.
             </Text>
-            <TouchableOpacity 
-              style={styles.addButton}
-              onPress={() => router.push('/(tabs)/createcard')}
-            >
-              <Ionicons name="add-circle" size={20} color="#fff" />
-              <Text style={styles.addButtonText}>Add Wildlife Data</Text>
-            </TouchableOpacity>
           </View>
         ) : (
           facts.map((item) => (
@@ -160,20 +156,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 15,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     backgroundColor: '#fff',
-    elevation: 3,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '700',
+    color: '#1a1a1a',
     flex: 1,
     textAlign: 'center',
-  },
-  addButtonHeader: {
-    width: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   content: {
     padding: 15,
@@ -198,23 +198,12 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     paddingHorizontal: 20,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFD700',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    marginLeft: 8,
+  cardContainer: {
+    position: 'relative',
+    marginVertical: 10,
   },
   card: {
     backgroundColor: '#fff',
-    marginVertical: 10,
     borderRadius: 10,
     elevation: 3,
     overflow: 'hidden',
@@ -252,17 +241,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#333',
     marginBottom: 8,
-  },
-  detail: {
-    fontSize: 14,
-    color: '#555',
-    marginBottom: 4,
-  },
-  description: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 8,
-    lineHeight: 20,
   },
   statusBadge: {
     alignSelf: 'flex-start',

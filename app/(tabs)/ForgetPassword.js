@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,51 +10,97 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
-const API_URL = 'http://172.21.247.100:5000'; 
+const API_URL = 'http://192.168.18.25:5000'; 
 
 const ForgetPassword = () => {
   const router = useRouter();
+  const { token: tokenFromUrl, email: emailFromUrl } = useLocalSearchParams();
+
   const [email, setEmail] = useState('');
+  const [token, setToken] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showManualEntry, setShowManualEntry] = useState(false);
+
+  useEffect(() => {
+    // If token and email come from URL, show reset form
+    if (tokenFromUrl && emailFromUrl) {
+      setShowManualEntry(true);
+      setToken(tokenFromUrl);
+      setEmail(decodeURIComponent(emailFromUrl));
+    }
+  }, [tokenFromUrl, emailFromUrl]);
+
+  const handleRequestReset = async () => {
+    if (!email.trim()) return Alert.alert('Error', 'Please enter your email.');
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) return Alert.alert('Error', 'Invalid email.');
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert(
+          'Success', 
+          'Check your email for reset instructions. Copy the token from the email and use "Enter Token Manually" below.',
+          [{ text: 'OK' }]
+        );
+      } else Alert.alert('Error', data.message || 'Failed to send email.');
+    } catch (err) {
+      console.error('Forgot password error:', err);
+      Alert.alert('Error', 'Could not connect to server.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleResetPassword = async () => {
-    if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email address');
-      return;
+    if (!email.trim() || !token.trim()) {
+      return Alert.alert('Error', 'Please enter both email and token.');
     }
-    
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
+    if (!password || !confirmPassword) {
+      return Alert.alert('Error', 'Please fill both password fields.');
+    }
+    if (password !== confirmPassword) {
+      return Alert.alert('Error', 'Passwords do not match.');
+    }
+    if (password.length < 8) {
+      return Alert.alert('Error', 'Password must be at least 8 characters.');
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return Alert.alert('Error', 'Password must contain at least one special character.');
     }
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/auth/forgot-password`, {
+      const res = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim().toLowerCase(),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          token: token.trim(), 
+          email: email.trim().toLowerCase(), 
+          newPassword: password 
         }),
       });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        Alert.alert('Success', result.message || 'Password reset instructions have been sent to your email.', [
-          { text: 'OK', onPress: () => router.push('/(tabs)/Login') }
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert('Success', data.message || 'Password reset successfully.', [
+          { text: 'OK', onPress: () => router.push('/(tabs)/Login') },
         ]);
       } else {
-        Alert.alert('Error', result.message || 'Failed to send reset instructions. Please try again.');
+        Alert.alert('Error', data.message || 'Reset failed.');
       }
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      Alert.alert('Connection Error', 'Could not connect to server. Please check your connection and try again.');
+    } catch (err) {
+      console.error('Reset password error:', err);
+      Alert.alert('Error', 'Could not connect to server.');
     } finally {
       setLoading(false);
     }
@@ -62,57 +108,131 @@ const ForgetPassword = () => {
 
   return (
     <KeyboardAwareContainer>
-    <View style={styles.container}>
-      {/* Logo Section */}
-      <View style={styles.logoContainer}>
-        <Image
-          source={require('@/assets/images/logo.jpeg')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-      </View>
+      <View style={styles.container}>
+        <View style={styles.logoContainer}>
+          <Image
+            source={require('@/assets/images/logo.jpeg')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </View>
 
-      {/* Title */}
-      <Text style={styles.title}>Forgot Password?</Text>
-      <Text style={styles.subtitle}>
-        Enter your email address and we'll send you instructions to reset your password.
-      </Text>
+        {showManualEntry ? (
+          <>
+            <Text style={styles.title}>Reset Password</Text>
+            <Text style={styles.subtitle}>
+              Enter the token from your email and create a new password.
+            </Text>
 
-      {/* Email Input */}
-      <View style={styles.inputContainer}>
-        <TextInput
-          style={styles.input}
-          placeholder="Enter your email"
-          placeholderTextColor="#999"
-          value={email}
-          onChangeText={setEmail}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
-      </View>
+            <TextInput
+              style={styles.input}
+              placeholder="Your Email"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-      {/* Reset Password Button */}
-      <TouchableOpacity 
-        style={[styles.resetButton, loading && styles.resetButtonDisabled]} 
-        activeOpacity={0.9}
-        onPress={handleResetPassword}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator color="#000" />
+            <TextInput
+              style={styles.input}
+              placeholder="Reset Token (from email)"
+              placeholderTextColor="#999"
+              value={token}
+              onChangeText={setToken}
+              autoCapitalize="none"
+              multiline
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="New Password"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Confirm Password"
+              placeholderTextColor="#999"
+              secureTextEntry
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+            />
+
+            <TouchableOpacity
+              style={[styles.resetButton, loading && styles.resetButtonDisabled]}
+              activeOpacity={0.9}
+              onPress={handleResetPassword}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.resetButtonText}>UPDATE PASSWORD</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => {
+                setShowManualEntry(false);
+                setToken('');
+                setPassword('');
+                setConfirmPassword('');
+              }}
+              style={styles.backLink}
+            >
+              <Text style={styles.backLinkText}>← Back to Request Reset</Text>
+            </TouchableOpacity>
+          </>
         ) : (
-          <Text style={styles.resetButtonText}>RESET PASSWORD</Text>
-        )}
-      </TouchableOpacity>
+          <>
+            <Text style={styles.title}>Forgot Password?</Text>
+            <Text style={styles.subtitle}>
+              Enter your email and we'll send instructions to reset your password.
+            </Text>
 
-      {/* Back to Login Link */}
-      <View style={styles.navigationContainer}>
-        <Text style={styles.navigationText}>Remember your password? </Text>
-        <TouchableOpacity onPress={() => router.push('/(tabs)/Login')}>
-          <Text style={styles.navigationLink}>Back to Login</Text>
-        </TouchableOpacity>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your email"
+              placeholderTextColor="#999"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+
+            <TouchableOpacity
+              style={[styles.resetButton, loading && styles.resetButtonDisabled]}
+              activeOpacity={0.9}
+              onPress={handleRequestReset}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.resetButtonText}>SEND RESET LINK</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => setShowManualEntry(true)}
+              style={styles.manualLink}
+            >
+              <Text style={styles.manualLinkText}>Already have a token? Enter manually →</Text>
+            </TouchableOpacity>
+
+            <View style={styles.navigationContainer}>
+              <Text style={styles.navigationText}>Remember your password? </Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/Login')}>
+                <Text style={styles.navigationLink}>Back to Login</Text>
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
-    </View>
     </KeyboardAwareContainer>
   );
 };
@@ -143,23 +263,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#666',
-    marginBottom: 40,
+    marginBottom: 30,
     textAlign: 'center',
     lineHeight: 20,
     maxWidth: 320,
   },
-  inputContainer: {
-    width: '95%',
-    marginBottom: 40,
-  },
   input: {
-    width: '100%',
+    width: '95%',
     height: 50,
     backgroundColor: '#F0F0F0',
     borderRadius: 8,
     paddingHorizontal: 20,
     fontSize: 14,
     color: '#000',
+    marginBottom: 20,
   },
   resetButton: {
     backgroundColor: '#F4D03F',
@@ -175,9 +292,30 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
   },
+  resetButtonDisabled: {
+    opacity: 0.6,
+  },
+  manualLink: {
+    marginBottom: 20,
+  },
+  manualLinkText: {
+    fontSize: 14,
+    color: '#007AFF',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  backLink: {
+    marginTop: 10,
+  },
+  backLinkText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
+  },
   navigationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 10,
   },
   navigationText: {
     fontSize: 14,
@@ -188,10 +326,6 @@ const styles = StyleSheet.create({
     color: '#FF6B6B',
     fontWeight: '500',
   },
-  resetButtonDisabled: {
-    opacity: 0.6,
-  },
 });
 
 export default ForgetPassword;
-
