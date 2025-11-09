@@ -19,6 +19,7 @@ import BottomNav from "../../components/BottomNav";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import KeyboardAwareContainer from "../../components/KeyboardAwareContainer";
 
+
 const API_URL = 'http://192.168.18.25:5000'; // backend URL
 
 const offensiveWords = ["badword", "ugly", "offensive"];
@@ -182,7 +183,7 @@ const ReportsFeed = () => {
   return (
     
     <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <KeyboardAwareContainer>
+     
       {/* Header aligned with HomeScreen style */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.menuButton}>
@@ -353,7 +354,7 @@ const ReportsFeed = () => {
       </KeyboardAvoidingView>
 
       <BottomNav onHomePress={() => router.push("/(tabs)/HomeScreen")} />
-         </KeyboardAwareContainer>
+      
       </SafeAreaView>
      
   );

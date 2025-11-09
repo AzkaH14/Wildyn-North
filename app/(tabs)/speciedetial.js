@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   familyText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFD700',
+    color: '#f5d625ff',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     borderLeftWidth: 4,
-    borderLeftColor: '#2d6a4f',
+    borderLeftColor: '#206043ff',
   },
   statusBadge: {
     flexDirection: 'row',
@@ -310,7 +310,7 @@ const styles = StyleSheet.create({
   },
   statusValue: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '650',
     color: '#2d6a4f',
   },
   section: {

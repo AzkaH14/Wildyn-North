@@ -7,7 +7,8 @@ import {
   Image, 
   ScrollView, 
   Alert, 
-  StyleSheet 
+  StyleSheet,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
@@ -17,6 +18,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import BottomNav from '../../components/BottomNav';
 
+const API_URL = 'http://192.168.18.25:5000';
 const healthOptions = ['Healthy', 'Injured', 'Sick', 'Hungry'];
 
 const UploadReport = () => {
@@ -27,6 +29,7 @@ const UploadReport = () => {
   const [location, setLocation] = useState(null);
   const [timestamp, setTimestamp] = useState('');
   const [locationLoading, setLocationLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -121,33 +124,78 @@ const UploadReport = () => {
     setSpecieName('Identified Specie Name');
   };
 
+  // NEW: Function to upload image to server
+  const uploadImageToServer = async (imageUri) => {
+    try {
+      const formData = new FormData();
+      
+      // Get filename from URI
+      const filename = imageUri.split('/').pop();
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : 'image/jpeg';
+
+      formData.append('image', {
+        uri: imageUri,
+        name: filename,
+        type: type,
+      });
+
+      console.log('📤 Uploading image to server...');
+      const response = await fetch(`${API_URL}/api/reports/upload-image`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to upload image');
+      }
+
+      console.log('✅ Image uploaded:', data.imageUrl);
+      return data.imageUrl;
+    } catch (error) {
+      console.error('❌ Error uploading image:', error);
+      throw error;
+    }
+  };
+
   const handleUpload = async () => {
     if (!image || !specieName || !selectedHealth) {
       Alert.alert('Incomplete', 'Please fill all required fields.');
       return;
     }
 
-    // Get user data from AsyncStorage
-    const userId = await AsyncStorage.getItem('userId');
-    const username = await AsyncStorage.getItem('username');
-
-    const reportData = {
-      image,
-      specieName,
-      healthStatus: selectedHealth,
-      location,
-      timestamp,
-      userId: userId || 'anonymous',
-      username: username || 'Anonymous User',
-    };
-
     Alert.alert('Confirm Upload', 'Are you sure you want to upload this report?', [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Upload',
         onPress: async () => {
+          setUploading(true);
           try {
-            const API_URL = 'http://192.168.18.25:5000'; // your computer's IP
+            // 1. First upload the image and get URL
+            console.log('Step 1: Uploading image...');
+            const imageUrl = await uploadImageToServer(image);
+            
+            // 2. Get user data from AsyncStorage
+            const userId = await AsyncStorage.getItem('userId');
+            const username = await AsyncStorage.getItem('username');
+
+            // 3. Create report data with image URL (not local URI)
+            const reportData = {
+              image: imageUrl,  // ← Use server URL instead of local URI
+              specieName,
+              healthStatus: selectedHealth,
+              location,
+              timestamp,
+              userId: userId || 'anonymous',
+              username: username || 'Anonymous User',
+            };
+
+            console.log('Step 2: Submitting report...');
             const response = await fetch(`${API_URL}/api/reports`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -165,7 +213,9 @@ const UploadReport = () => {
             }
           } catch (error) {
             console.error('Upload error:', error);
-            Alert.alert('Connection Error', 'Could not connect to server. Check your connection.');
+            Alert.alert('Upload Failed', error.message || 'Could not upload. Check your connection.');
+          } finally {
+            setUploading(false);
           }
         },
       },
@@ -189,11 +239,11 @@ const UploadReport = () => {
       <View style={styles.section}>
         <Text style={styles.label}>Upload Picture/Video</Text>
         <View style={styles.imageOptions}>
-          <TouchableOpacity style={styles.optionButton} onPress={pickFromCamera}>
+          <TouchableOpacity style={styles.optionButton} onPress={pickFromCamera} disabled={uploading}>
             <Ionicons name="camera" size={24} color="#000" />
             <Text style={styles.optionText}>Camera</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.optionButton} onPress={pickImage}>
+          <TouchableOpacity style={styles.optionButton} onPress={pickImage} disabled={uploading}>
             <Ionicons name="image" size={24} color="#000" />
             <Text style={styles.optionText}>Gallery</Text>
           </TouchableOpacity>
@@ -210,8 +260,9 @@ const UploadReport = () => {
             style={styles.input}
             value={specieName}
             onChangeText={setSpecieName}
+            editable={!uploading}
           />
-          <TouchableOpacity onPress={identifySpecie} style={styles.aiButton}>
+          <TouchableOpacity onPress={identifySpecie} style={styles.aiButton} disabled={uploading}>
             <Ionicons name="scan" size={22} color="#000" />
             <Text style={styles.aiText}>AI</Text>
           </TouchableOpacity>
@@ -227,6 +278,7 @@ const UploadReport = () => {
               key={option}
               style={styles.radioOption}
               onPress={() => setSelectedHealth(option)}
+              disabled={uploading}
             >
               <View
                 style={[
@@ -258,8 +310,19 @@ const UploadReport = () => {
       </View>
 
       {/* Upload Button */}
-      <TouchableOpacity style={styles.uploadButton} onPress={handleUpload}>
-        <Text style={styles.uploadButtonText}>Upload Report</Text>
+      <TouchableOpacity 
+        style={[styles.uploadButton, uploading && styles.uploadButtonDisabled]} 
+        onPress={handleUpload}
+        disabled={uploading}
+      >
+        {uploading ? (
+          <View style={styles.uploadingContainer}>
+            <ActivityIndicator color="#000" />
+            <Text style={[styles.uploadButtonText, { marginLeft: 10 }]}>Uploading...</Text>
+          </View>
+        ) : (
+          <Text style={styles.uploadButtonText}>Upload Report</Text>
+        )}
       </TouchableOpacity>
       </ScrollView>
 
@@ -343,5 +406,12 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
   },
+  uploadButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
   uploadButtonText: { fontWeight: '700', fontSize: 16 },
+  uploadingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
 });

@@ -92,8 +92,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 75,
+    height: 75,
     marginBottom: 20,
     marginTop: -40,
   },
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   nextText: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#FFD500',
+    color: '#efcc1bff',
     letterSpacing: 2,
   },
  
