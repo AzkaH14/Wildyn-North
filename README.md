@@ -3,7 +3,7 @@
 A Final Year Project (FYP) designed to enable individuals and communities to report and track wildlife sightings. The system supports wildlife monitoring and conservation by allowing users to submit sightings, upload images, and view other reports in an organized platform.
 
 ## Features
-1. Wildlife Sighting & Reporting
+### 1. Wildlife Sighting & Reporting
 
 Users (locals, tourists, researchers) can submit wildlife sightings with photos, species details, and location.
 
@@ -49,7 +49,8 @@ Easy navigation for browsing reports and submitting sightings.
 
 Responsive design for different screen sizes.
 
-Data Management
+
+## Data Management
 
 Reports stored in MongoDB.
 
