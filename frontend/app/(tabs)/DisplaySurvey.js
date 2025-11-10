@@ -574,7 +574,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   container: {
-    padding: 16,
+    padding: 14,
     paddingBottom: 100,
   },
   statsGrid: {
@@ -591,7 +591,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.07,
     shadowRadius: 8,
     elevation: 3,
   },
@@ -602,14 +602,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#f1f5f9',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 11,
   },
   statValue: {
     fontSize: 22,
     fontWeight: '700',
     color: '#1a1a1a',
     marginBottom: 4,
-    letterSpacing: -0.5,
+    letterSpacing: -0.6,
   },
   statLabel: {
     fontSize: 12,

@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     width: '100%',
-    height: 300, // Increased from 200 to 300
+    height: 250, // Increased from 200 to 250
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   modalOptionText: {
-    fontSize: 16,
+    fontSize: 13,
     marginLeft: 15,
     color: '#000',
   },
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   modalCancelText: {
-    fontSize: 16,
+    fontSize: 13,
     color: '#666',
   },
 });

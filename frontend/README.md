@@ -111,7 +111,7 @@ Endpoint	Method	Description
 /api/users/reset-password	POST	Reset password using token
 /api/reports	GET	Get all wildlife reports
 /api/reports	POST	Submit a new wildlife report
-/api/reports/:id	PUT	Update a report (verify/unverify)
+/api/reports/:id	PUT	Update a report status (verify)
 /api/reports/:id	DELETE	Delete a wildlife report
 📸 Screenshots / Demo
 
