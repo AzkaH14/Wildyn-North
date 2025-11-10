@@ -689,16 +689,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#1a1a1a',
     marginLeft: 16,
-    fontWeight: '500',
+    fontWeight: '520',
   },
   modalCancelButton: {
-    padding: 16,
+    padding: 14,
     alignItems: 'center',
     marginTop: 8,
   },
   modalCancelText: {
     fontSize: 16,
-    color: '#666',
+    color: '#fff',
     fontWeight: '600',
   },
 });
