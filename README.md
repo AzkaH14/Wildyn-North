@@ -1,55 +1,78 @@
-🦌 Wildlife Sighting and Reporting System
+Wildlife Sighting and Reporting System
 
-A Final Year Project (FYP) designed to enable individuals and communities to report and track wildlife sightings. The system supports wildlife monitoring and conservation efforts by allowing users to submit sightings, upload images, and view other reported sightings in an organized platform.
+A Final Year Project (FYP) designed to enable individuals and communities to report and track wildlife sightings. The system supports wildlife monitoring and conservation by allowing users to submit sightings, upload images, and view other reports in an organized platform.
 
-📌 Features
+Features
+1. Wildlife Sighting & Reporting
 
-🌿 User Roles
+Users (locals, tourists, researchers) can submit wildlife sightings with photos, species details, and location.
 
-Community Users – submit and view collective wildlife reports
+2. Admin Moderation
 
-Individual Users – create personal accounts and report sightings independently
+Admin can view all reports and delete inappropriate or invalid submissions to maintain data reliability.
 
-📍 Wildlife Sighting Reports
+3. Researcher Library
 
-Record species details: common name, scientific name, family, description, habitat, location, and date/time
+Researchers can create and manage species cards with images, scientific information, habitat, and conservation guidance.
 
-Upload images as evidence
+4. Offline Functionality
 
-Reports are categorized as verified or unverified
+Users can submit reports even without internet access; data syncs automatically when the network is available.
 
-🌐 Interactive UI
+5. Smart Species Identification
 
-Clean, user-friendly login/signup and dashboard interfaces
+The platform helps identify species from images for easier reporting and awareness.
 
-Easy navigation for browsing reports and submitting sightings
+6. User Management & Verification
 
-Responsive design for different screen sizes
+Admin verifies researcher accounts and manages user access, ensuring only trusted contributors can submit critical data.
 
-🧠 Data Management
+User Roles
 
-Reports stored in MongoDB
+Community Users: Submit and view collective wildlife reports.
 
-Backend APIs handle CRUD operations for reports and user data
+Individual Users: Create personal accounts and report sightings independently.
 
-🔒 Authentication & Security
+Wildlife Sighting Reports
 
-Secure login and registration with JWT authentication
+Record species details: common name, scientific name, family, description, habitat, location, and date/time.
 
-Password reset functionality via email verification
+Upload images as evidence.
 
-📊 Analytics Ready
+Reports can be categorized as verified.
 
-All reports stored systematically for future analysis and wildlife monitoring insights
+Interactive UI
 
-🛠️ Tech Stack
+Clean, user-friendly login/signup and dashboard interfaces.
+
+Easy navigation for browsing reports and submitting sightings.
+
+Responsive design for different screen sizes.
+
+Data Management
+
+Reports stored in MongoDB.
+
+Backend APIs handle CRUD operations for reports and user data.
+
+Authentication & Security
+
+Secure login and registration with JWT authentication.
+
+Password reset functionality via email verification.
+
+Analytics Ready
+
+All reports stored systematically for future analysis and wildlife monitoring insights.
+
+Tech Stack
 Component	Technology Used
 Frontend	React Native (Expo)
 Backend	Node.js / Express.js
 Database	MongoDB
 Authentication	JWT, NodeMailer
 Version Control	Git & GitHub
-📁 Folder Structure
+Folder Structure
 Wildyn-North/
 ├── backend/
 │   ├── controllers/       # API logic for users, reports
@@ -70,21 +93,25 @@ Wildyn-North/
 ├── README.md
 └── .gitignore
 
-📲 Getting Started
-1️⃣ Clone the Repository
+Getting Started
+1. Clone the Repository
 git clone https://github.com/AzkaH14/Wildyn-North.git
 cd Wildyn-North
 
-2️⃣ Install Dependencies
+2. Install Dependencies
+
 Backend
+
 cd backend
 npm install
 
+
 Frontend
+
 cd ../frontend
 npm install
 
-3️⃣ Configure Environment Variables
+3. Configure Environment Variables
 
 Create a .env file in the backend/ folder:
 
@@ -94,16 +121,20 @@ EMAIL_USER=your_email_address
 EMAIL_PASS=your_email_password
 PORT=5000
 
-4️⃣ Run the Application
+4. Run the Application
+
 Backend
+
 cd backend
 npm start
 
+
 Frontend
+
 cd frontend
 npm start
 
-🔗 API Endpoints (Backend)
+API Endpoints
 Endpoint	Method	Description
 /api/users/register	POST	Register a new user
 /api/users/login	POST	Login user and return JWT token
@@ -113,7 +144,7 @@ Endpoint	Method	Description
 /api/reports	POST	Submit a new wildlife report
 /api/reports/:id	PUT	Update a report status (verify)
 /api/reports/:id	DELETE	Delete a wildlife report
-📸 Screenshots / Demo
+Screenshots / Demo
 
 (Add actual screenshots or GIFs of the app here for login, dashboard, report submission, and viewing reports)
 
@@ -125,33 +156,33 @@ Submit Wildlife Report Form
 
 Report Detail View
 
-👥 Project Team Members
+Project Team Members
 Name	ID
 Azka Humayon	47631
 Aleeha Akhlaq	46174
 Rida Fatima	48403
-⚡ Challenges Faced
+Challenges Faced
 
-MongoDB Setup Delay – Configuration issues slowed progress on database-related tasks
+MongoDB setup delays.
 
-Git Merge Conflicts – Some files lost; resolved via restoring previous commits and branch management
+Git merge conflicts.
 
-Email Authentication – “Forgot Password” emails failed initially due to SMTP issues
+Email authentication issues.
 
-API Integration Errors – Frontend-backend mismatches resolved with coordinated debugging
+API integration errors.
 
-Deployment Delays – Environment differences between team members caused minor integration issues
+Deployment delays due to environment differences.
 
-📄 License
+License
 
-This project is for academic purposes only. Please contact the team for commercial or external use.
+This project is for academic purposes only. Contact the team for commercial or external use.
 
-📝 Future Improvements
+Future Improvements
 
-Add push notifications for new verified wildlife reports
+Add push notifications for new verified wildlife reports.
 
-Integrate map-based report visualization
+Integrate map-based report visualization.
 
-Implement AI-assisted species recognition from uploaded images
+Implement AI-assisted species recognition from uploaded images.
 
-Add analytics dashboards for wildlife monitoring
+Add analytics dashboards for wildlife monitoring.
