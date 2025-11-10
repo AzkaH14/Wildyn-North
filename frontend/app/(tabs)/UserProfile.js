@@ -54,6 +54,7 @@ const UserProfile = () => {
   const loadProfileData = async () => {
     try {
       const userId = await AsyncStorage.getItem('userId');
+      const userType = await AsyncStorage.getItem('userType');
       const savedProfileImage = await AsyncStorage.getItem('profileImage');
 
       if (savedProfileImage) {
@@ -61,7 +62,11 @@ const UserProfile = () => {
       }
 
       if (userId) {
-        const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
+        const endpoint =
+          userType === 'researcher'
+            ? `${API_URL}/api/auth/researcher/profile/${userId}`
+            : `${API_URL}/api/auth/profile/${userId}`;
+        const response = await fetch(endpoint);
         const result = await response.json();
 
         if (response.ok && result.user) {
@@ -150,6 +155,7 @@ const UserProfile = () => {
     setIsLoading(true);
     try {
       const userId = await AsyncStorage.getItem('userId');
+    const userType = await AsyncStorage.getItem('userType');
       if (!userId) {
         Alert.alert('Error', 'User not logged in');
         return;
@@ -162,7 +168,12 @@ const UserProfile = () => {
 
       if (editForm.password) updateData.password = editForm.password;
 
-      const response = await fetch(`${API_URL}/api/auth/profile/${userId}`, {
+    const endpoint =
+      userType === 'researcher'
+        ? `${API_URL}/api/auth/researcher/profile/${userId}`
+        : `${API_URL}/api/auth/profile/${userId}`;
+
+    const response = await fetch(endpoint, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
@@ -196,6 +207,19 @@ const UserProfile = () => {
     }
   };
 
+  const handleBack = async () => {
+    try {
+      const userType = await AsyncStorage.getItem('userType');
+      if (userType === 'researcher') {
+        router.push('/(tabs)/HomeScreenR');
+      } else {
+        router.push('/(tabs)/HomeScreen');
+      }
+    } catch (_) {
+      router.push('/(tabs)/HomeScreen');
+    }
+  };
+
   return (
     <KeyboardAwareContainer>
       <SafeAreaView style={styles.safeArea}>
@@ -203,7 +227,7 @@ const UserProfile = () => {
 
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.push('/(tabs)/HomeScreen')} style={styles.backButton}>
+          <TouchableOpacity onPress={handleBack} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#000" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>User Profile</Text>
