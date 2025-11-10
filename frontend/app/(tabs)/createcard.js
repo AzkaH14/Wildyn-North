@@ -377,13 +377,13 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     width: '100%',
-    height: 250, // Increased from 200 to 250
+    height: 300, // Increased from 200 to 300
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
   },
   imagePlaceholderText: {
-    marginTop: 10,
+    marginTop: 9,
     fontSize: 16,
     color: '#999',
   },
