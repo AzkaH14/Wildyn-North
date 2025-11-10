@@ -133,7 +133,7 @@ export default function WildlifeLibraryUser() {
               <Ionicons name="library-outline" size={80} color="#ccc" />
               <Text style={styles.emptyTitle}>No Wildlife Data</Text>
               <Text style={styles.emptyText}>
-                No wildlife information has been uploaded yet. Check back soon!
+                No wildlife information has been uploaded yet. Check back again!
               </Text>
             </View>
           ) : (
@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 55,
   },
   emptyTitle: {
     fontSize: 22,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#f1f1f1ff',
     borderRadius: 10,
     marginVertical: 10,
     elevation: 3,

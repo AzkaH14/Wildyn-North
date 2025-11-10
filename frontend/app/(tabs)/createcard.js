@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f0f0f0',
   },
   modalOptionText: {
-    fontSize: 13,
+    fontSize: 12,
     marginLeft: 15,
     color: '#000',
   },
@@ -500,7 +500,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   modalCancelText: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
   },
 });
