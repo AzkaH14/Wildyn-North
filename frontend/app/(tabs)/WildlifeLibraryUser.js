@@ -25,7 +25,7 @@ const SpeciesCard = ({ species, onPress }) => {
       activeOpacity={0.7}
     >
       <Image 
-        source={{ uri: species.imageUri || 'https://via.placeholder.com/400x300' }} 
+        source={{ uri: species.imageUri || 'https://via.placeholder.com/300x300' }} 
         style={styles.image} 
       />
       <View style={styles.cardContent}>
@@ -43,7 +43,7 @@ const SpeciesCard = ({ species, onPress }) => {
         )}
         <View style={styles.viewMore}>
           <Text style={styles.viewMoreText}>View Details</Text>
-          <Ionicons name="arrow-forward" size={16} color="#FFD700" />
+          <Ionicons name="arrow-forward" size={16} color="#fbd91cff" />
         </View>
       </View>
     </TouchableOpacity>
