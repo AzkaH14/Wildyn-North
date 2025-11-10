@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose');
 
 const researcherSchema = new mongoose.Schema({
@@ -68,4 +69,3 @@ const researcherSchema = new mongoose.Schema({
 const Researcher = mongoose.model('Researcher', researcherSchema);
 
 module.exports = Researcher;
-
