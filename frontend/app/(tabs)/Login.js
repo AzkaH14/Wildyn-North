@@ -15,7 +15,7 @@ import KeyboardAwareContainer from '../../components/KeyboardAwareContainer';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_URL = 'http://192.168.109.181:5000'; // Update with your backend IP
+const API_URL = 'http://172.21.242.207:5000'; // Update with your backend IP
 
 const Login = () => {
   const router = useRouter();
