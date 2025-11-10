@@ -350,7 +350,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 15,
     paddingVertical: 12,
-    backgroundColor: '#FFF',
+    backgroundColor: '#fff',
   },
   headerTitle: {
     fontSize: 20,
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     margin: 15,
     borderRadius: 10,
     overflow: 'hidden',
-    backgroundColor: '#fff',
+    backgroundColor: '#dededeff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.4,
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
   },
   imagePlaceholder: {
     width: '100%',
-    height: 300, // Increased from 200 to 300
+    height: 305, // Increased from 200 to 305
     backgroundColor: '#F5F5F5',
     justifyContent: 'center',
     alignItems: 'center',
@@ -427,7 +427,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#000',
     borderWidth: 1,
-    borderColor: '#E8E8E8',
+    borderColor: '#ffebebff',
   },
   textArea: {
     minHeight: 80,
@@ -491,11 +491,11 @@ const styles = StyleSheet.create({
   },
   modalOptionText: {
     fontSize: 12,
-    marginLeft: 15,
+    marginLeft: 14,
     color: '#000',
   },
   modalCancel: {
-    paddingVertical: 15,
+    paddingVertical: 14,
     alignItems: 'center',
     marginTop: 10,
   },
