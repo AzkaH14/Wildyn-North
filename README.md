@@ -1,33 +1,33 @@
-Wildlife Sighting and Reporting System
+# Wildlife Sighting and Reporting System
 
 A Final Year Project (FYP) designed to enable individuals and communities to report and track wildlife sightings. The system supports wildlife monitoring and conservation by allowing users to submit sightings, upload images, and view other reports in an organized platform.
 
-Features
+## Features
 1. Wildlife Sighting & Reporting
 
 Users (locals, tourists, researchers) can submit wildlife sightings with photos, species details, and location.
 
-2. Admin Moderation
+### 2. Admin Moderation
 
 Admin can view all reports and delete inappropriate or invalid submissions to maintain data reliability.
 
-3. Researcher Library
+### 3. Researcher Library
 
 Researchers can create and manage species cards with images, scientific information, habitat, and conservation guidance.
 
-4. Offline Functionality
+### 4. Offline Functionality
 
 Users can submit reports even without internet access; data syncs automatically when the network is available.
 
-5. Smart Species Identification
+### 5. Smart Species Identification
 
 The platform helps identify species from images for easier reporting and awareness.
 
-6. User Management & Verification
+### 6. User Management & Verification
 
 Admin verifies researcher accounts and manages user access, ensuring only trusted contributors can submit critical data.
 
-User Roles
+## User Roles
 
 Community Users: Submit and view collective wildlife reports.
 
@@ -65,7 +65,7 @@ Analytics Ready
 
 All reports stored systematically for future analysis and wildlife monitoring insights.
 
-Tech Stack
+## Tech Stack
 Component	Technology Used
 Frontend	React Native (Expo)
 Backend	Node.js / Express.js
@@ -93,12 +93,12 @@ Wildyn-North/
 ├── README.md
 └── .gitignore
 
-Getting Started
-1. Clone the Repository
+## Getting Started
+### 1. Clone the Repository
 git clone https://github.com/AzkaH14/Wildyn-North.git
 cd Wildyn-North
 
-2. Install Dependencies
+### 2. Install Dependencies
 
 Backend
 
@@ -111,7 +111,7 @@ Frontend
 cd ../frontend
 npm install
 
-3. Configure Environment Variables
+### 3. Configure Environment Variables
 
 Create a .env file in the backend/ folder:
 
@@ -121,15 +121,15 @@ EMAIL_USER=your_email_address
 EMAIL_PASS=your_email_password
 PORT=5000
 
-4. Run the Application
+### 4. Run the Application
 
-Backend
+## Backend
 
 cd backend
 npm start
 
 
-Frontend
+## Frontend
 
 cd frontend
 npm start
@@ -156,33 +156,9 @@ Submit Wildlife Report Form
 
 Report Detail View
 
-Project Team Members
-Name	ID
+## Project Team Members
+### Name	ID
 Azka Humayon	47631
 Aleeha Akhlaq	46174
 Rida Fatima	48403
-Challenges Faced
 
-MongoDB setup delays.
-
-Git merge conflicts.
-
-Email authentication issues.
-
-API integration errors.
-
-Deployment delays due to environment differences.
-
-License
-
-This project is for academic purposes only. Contact the team for commercial or external use.
-
-Future Improvements
-
-Add push notifications for new verified wildlife reports.
-
-Integrate map-based report visualization.
-
-Implement AI-assisted species recognition from uploaded images.
-
-Add analytics dashboards for wildlife monitoring.
