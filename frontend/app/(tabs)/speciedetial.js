@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
   commonName: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#fff',
+    color: '#eeededff',
     marginBottom: 8,
     letterSpacing: -0.5,
   },
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
   familyBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 215, 0, 0.2)',
+    backgroundColor: 'rgba(255, 217, 0, 0.42)',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   familyText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFD700',
+    color: '#f7d61bff',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },

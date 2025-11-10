@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
   },
   nextBadgeName: {
     fontWeight: '600',
-    color: '#2d6a4f',
+    color: '#16583bff',
   },
   section: {
     paddingHorizontal: 20,
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
   motivationText: {
     flex: 1,
     fontSize: 13,
-    color: '#1b5e20',
+    color: '#2d6a4f',
     lineHeight: 20,
     marginLeft: 12,
   },

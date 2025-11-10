@@ -47,7 +47,7 @@ export default function ResearcherHub() {
             activeOpacity={0.7}
           >
             <View style={[styles.cardIconContainer, { backgroundColor: '#fff3e0' }]}>
-              <Ionicons name="pencil" size={32} color="#ef6c00" />
+              <Ionicons name="pencil" size={32} color="#f88424ff" />
             </View>
             <Text style={styles.cardTitle}>Create Species Fact</Text>
             <Text style={styles.cardDescription}>
@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   container: {
-    paddingBottom: 80,
+    paddingBottom: 75,
   },
   introSection: {
     padding: 20,
@@ -152,8 +152,8 @@ const styles = StyleSheet.create({
     textAlign: 'left',
     fontWeight: 'light',
     marginLeft : 10,
-    marginTop : -13,
-    marginBottom :-13,
+    marginTop : -12,
+    marginBottom :-12,
   },
   cardsContainer: {
     padding: 15,
@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
     marginBottom: 12,
-    lineHeight: 20,
+    lineHeight: 19.5,
   },
   cardAction: {
     flexDirection: 'row',
