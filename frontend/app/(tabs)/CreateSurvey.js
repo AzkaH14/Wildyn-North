@@ -729,6 +729,6 @@ const styles = StyleSheet.create({
   modalAddButtonText: {
     color: '#1f2937',
     fontSize: 17,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
