@@ -44,7 +44,7 @@ router.post('/signup', async (req, res) => {
     const trimmedEmail = email.trim().toLowerCase();
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(trimmedEmail)) {
-      return res.status(400).json({ message: 'Please enter a valid email address' });
+      return res.status(400).json({ message: 'Please Enter Valid Email Address' });
     }
 
     // Password validation
