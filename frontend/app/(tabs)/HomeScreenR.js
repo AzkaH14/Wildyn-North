@@ -428,7 +428,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   actionCard: {
-    width: (width - 52) / 2,
+    width: (width - 53) / 2,
     backgroundColor: '#fff',
     borderRadius: 16,
     padding: 20,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f4f1',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 12,
+    marginRight: 11,
   },
   sidebarText: {
     flex: 1,
@@ -582,7 +582,7 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#e0e0e0',
     marginVertical: 8,
-    marginHorizontal: 20,
+    marginHorizontal: 22,
   },
   sidebarLogout: {
     flexDirection: 'row',
