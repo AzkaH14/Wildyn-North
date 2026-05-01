@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     elevation: 6,
     shadowColor: '#000',
     shadowOpacity: 0.1,
-    shadowRadius: 6,
+    shadowRadius: 5,
   },
   navItem: {
     flex: 1,
