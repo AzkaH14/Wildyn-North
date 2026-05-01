@@ -30,7 +30,7 @@ const badgeTiers = [
   },
   {
     id: 2,
-    name: 'Nature Guardian',
+    name: 'Nature Protector',
     icon: 'shield-checkmark',
     color: '#C0C0C0',
     gradient: ['#C0C0C0', '#A8A8A8'],
@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     paddingTop: 20,
   },
   currentBadgeContainer: {
-    borderRadius: 20,
+    borderRadius: 22,
     padding: 32,
     alignItems: 'center',
     shadowColor: '#000',
