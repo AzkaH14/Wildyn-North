@@ -42,7 +42,7 @@ const reportSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-    default: 'Unknown User',
+    default: 'Unknown User Ahead',
   },
   comments: [commentSchema],
   createdAt: {
