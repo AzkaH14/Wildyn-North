@@ -374,7 +374,7 @@ const ReportsFeed = () => {
                       />
                     )}
                     <Text style={styles.caption}>
-                      <Text style={{ fontWeight: "700" }}>{item.specieName}</Text> • {item.healthStatus}
+                      <Text style={{ fontWeight: "650" }}>{item.specieName}</Text> • {item.healthStatus}
                     </Text>
 
                     <Text style={styles.commentTitle}>Comments</Text>
@@ -541,13 +541,13 @@ const styles = StyleSheet.create({
   pinnedCommentBg: {
     backgroundColor: "#fff7da",
   },
-  commentUser: { fontWeight: "700" },
+  commentUser: { fontWeight: "650" },
   pinnedLabel: {
     color: '#b45309',
     fontSize: 12,
     fontWeight: '600',
   },
-  commentText: { color: "#333", marginTop: 2 },
+  commentText: { color: "#333", marginTop: 3 },
   centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   loadingText: { fontSize: 16, color: '#666', marginTop: 10 },
   errorText: { fontSize: 16, color: '#ff6b6b', textAlign: 'center', marginTop: 10, marginBottom: 20 },
