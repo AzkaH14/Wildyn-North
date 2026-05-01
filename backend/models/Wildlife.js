@@ -43,6 +43,6 @@ const wildlifeSchema = new mongoose.Schema({
   },
 });
 
-const Wildlife = mongoose.model('Wildlife', wildlifeSchema);
+const Wildlife = mongoose.model('Wildlife Conservation', wildlifeSchema);
 
 module.exports = Wildlife;
