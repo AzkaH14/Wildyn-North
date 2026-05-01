@@ -1,6 +1,4 @@
 
-
-
 const mongoose = require('mongoose');
 
 const feedbackSchema = new mongoose.Schema({
@@ -31,7 +29,7 @@ const feedbackSchema = new mongoose.Schema({
     default: Date.now,
   },
 }, {
-  timestamps: true // Automatically adds createdAt and updatedAt
+  timestamps: true // Automatically adds createdAt and updatedAt on it
 });
 
 const Feedback = mongoose.model('Feedback', feedbackSchema);
