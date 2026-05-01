@@ -132,7 +132,7 @@ const HomeScreen = () => {
           return;
         }
       } catch (_) {
-        // Allow unauthenticated users to view Home
+        // Allow unauthenticated users To View Home Screen
         return;
       }
     };
