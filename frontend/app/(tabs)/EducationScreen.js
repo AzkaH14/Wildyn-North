@@ -56,7 +56,7 @@ const ResearcherEducationScreen = () => {
     }
     
     if (!formData.graduationYear.trim()) {
-      newErrors.graduationYear = 'Graduation year is required';
+      newErrors.graduationYear = 'Graduation year must be required';
     } else {
       const year = parseInt(formData.graduationYear);
       const currentYear = new Date().getFullYear();
