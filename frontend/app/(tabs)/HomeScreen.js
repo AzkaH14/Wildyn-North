@@ -286,6 +286,15 @@ const HomeScreen = () => {
         </TouchableWithoutFeedback>
       )}
 
+      {/* ✅ Sidebar Drawer */}
+      <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
+        <View style={styles.sidebarHeader}>
+          <View style={styles.sidebarProfile}>
+            <Ionicons name="person-circle" size={60} color="#2d6a4f" />
+            <Text style={styles.sidebarName}>{username || 'Community User'}</Text>
+            <Text style={styles.sidebarEmail}>{email || ''}</Text>
+          </View>
+        </View>
 
         <View style={styles.sidebarContent}>
           <TouchableOpacity 
