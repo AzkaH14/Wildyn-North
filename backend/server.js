@@ -82,7 +82,7 @@ try {
   app.use('/api/wildlife', wildlifeRoutes);
   app.use('/api/auth', authRoutes);
   
-  console.log('✅ Routes registered successfully');
+  console.log('✅ Routes has been registered successfully');
   console.log('   - /api/auth/signup');
   console.log('   - /api/auth/researcher/signup');
   console.log('   - /api/auth/login');

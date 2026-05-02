@@ -25,7 +25,7 @@ router.get('/myreports/:userId', async (req, res) => {
     const reports = await Report.find({ userId }).sort({ createdAt: -1 });
     res.json(reports);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch user reports' });
+    res.status(500).json({ message: 'Failed to fetch User Reports' });
   }
 });
 

@@ -173,7 +173,7 @@ const ReportsHistory = () => {
           <Ionicons name="arrow-back" size={24} color="#1a1a1a" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>My Reports</Text>
+          <Text style={styles.headerTitle}>My Reports Section</Text>
           <Text style={styles.headerSubtitle}>Your uploaded reports</Text>
         </View>
         <View style={{ width: 40 }} />

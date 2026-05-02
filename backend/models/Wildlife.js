@@ -47,6 +47,6 @@ const wildlifeSchema = new mongoose.Schema({
   },
 });
 
-const Wildlife = mongoose.model('Wildlife', wildlifeSchema);
+const Wildlife = mongoose.model('WildlifeLibrary', wildlifeSchema);
 
 module.exports = Wildlife;
