@@ -1,4 +1,3 @@
-
 import React, { useRef, useState, useEffect } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
@@ -17,9 +16,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import BottomNav from '../../components/BottomNav';
+import BottomNav from '../../assets/components/BottomNav';
+import { API_URL } from '../../constants/api';
+import NotificationBell from '../../assets/components/NotificationBell';
 
-const API_URL = 'http://192.168.109.181:5000';
 
 const { width } = Dimensions.get('window');
 
@@ -55,7 +55,6 @@ const getDailyFact = () => {
 const HomeScreen = () => {
   const dailyFact = getDailyFact();
   const router = useRouter();
-
   // ✅ Sidebar animation
   const slideAnim = useRef(new Animated.Value(-width * 0.75)).current;
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -63,8 +62,19 @@ const HomeScreen = () => {
   // Profile image state
   const [profileImage, setProfileImage] = useState(null);
   const [totalReports, setTotalReports] = useState(0);
+  const [thisMonthReports, setThisMonthReports] = useState(0);
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
+
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
 
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
@@ -76,49 +86,48 @@ const HomeScreen = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Load profile image from storage
-  const loadProfileImage = async () => {
+  const loadDashboardData = async () => {
     try {
-      const savedProfileImage = await AsyncStorage.getItem('profileImage');
-      if (savedProfileImage) {
-        setProfileImage(savedProfileImage);
-      }
-    } catch (error) {
-      console.log('Error loading profile image:', error);
-    }
-  };
+      const [savedProfileImage, userId, savedUsername, savedEmail] = await Promise.all([
+        AsyncStorage.getItem('profileImage'),
+        AsyncStorage.getItem('userId'),
+        AsyncStorage.getItem('username'),
+        AsyncStorage.getItem('userEmail'),
+      ]);
 
-  const loadReportCount = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/reports`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) setTotalReports(data.length);
-    } catch (e) {
-      // fail silently for count
-    }
-  };
-
-  const loadUserProfile = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (userId) {
-        try {
-          const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
-          const result = await response.json();
-          if (response.ok && result.user) {
-            setUsername(result.user.username || '');
-            setEmail(result.user.email || '');
-            await AsyncStorage.setItem('username', result.user.username || '');
-            await AsyncStorage.setItem('userEmail', result.user.email || '');
-            return;
-          }
-        } catch (_) {}
-      }
-      const savedUsername = await AsyncStorage.getItem('username');
-      const savedEmail = await AsyncStorage.getItem('userEmail');
+      if (savedProfileImage) setProfileImage(savedProfileImage);
       if (savedUsername) setUsername(savedUsername);
       if (savedEmail) setEmail(savedEmail);
+
+      const requests = [fetchWithTimeout(`${API_URL}/api/reports`)];
+      if (userId) {
+        requests.push(fetchWithTimeout(`${API_URL}/api/auth/profile/${userId}`));
+      }
+
+      const [reportsRes, profileRes] = await Promise.allSettled(requests);
+
+      if (reportsRes.status === 'fulfilled' && reportsRes.value?.ok) {
+        const reports = await reportsRes.value.json();
+        if (Array.isArray(reports)) {
+          setTotalReports(reports.length);
+          const now = new Date();
+          const monthCount = reports.filter((r) => {
+            const d = new Date(r.createdAt || r.date || r.timestamp);
+            return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+          }).length;
+          setThisMonthReports(monthCount);
+        }
+      }
+
+      if (profileRes?.status === 'fulfilled' && profileRes.value?.ok) {
+        const result = await profileRes.value.json();
+        if (result?.user) {
+          setUsername(result.user.username || savedUsername || '');
+          setEmail(result.user.email || savedEmail || '');
+          await AsyncStorage.setItem('username', result.user.username || '');
+          await AsyncStorage.setItem('userEmail', result.user.email || '');
+        }
+      }
     } catch (_) {}
   };
 
@@ -132,22 +141,18 @@ const HomeScreen = () => {
           return;
         }
       } catch (_) {
-        // Allow unauthenticated users To View Home Screen
+        // Allow unauthenticated users to view Home
         return;
       }
     };
 
     ensureCommunityUser();
-    loadProfileImage();
-    loadReportCount();
-    loadUserProfile();
+    loadDashboardData();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadProfileImage();
-      loadReportCount();
-      loadUserProfile();
+      loadDashboardData();
     }, [])
   );
 
@@ -196,6 +201,9 @@ const HomeScreen = () => {
             end={{ x: 1, y: 1 }}
             style={styles.factContainer}
           >
+            <View style={styles.factNotificationButton}>
+              <NotificationBell color="#2d6a4f" size={22} />
+            </View>
             <View style={styles.factHeader}>
               <Ionicons name="leaf" size={28} color="#FFD700" />
               <Text style={styles.factBadge}>Fact of the Day</Text>
@@ -212,6 +220,18 @@ const HomeScreen = () => {
           <View style={styles.actionCardsGrid}>
             <TouchableOpacity
               style={styles.actionCard}
+              onPress={() => router.push('/(tabs)/UploadReport')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIconContainer, { backgroundColor: '#fff3e0' }]}>
+                <Ionicons name="cloud-upload-outline" size={32} color="#ef6c00" />
+              </View>
+              <Text style={styles.actionCardTitle}>Upload Report</Text>
+              <Text style={styles.actionCardSubtitle}>Add New Sighting</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.actionCard}
               onPress={() => router.push('/(tabs)/ReportsFeed')}
               activeOpacity={0.7}
             >
@@ -224,46 +244,87 @@ const HomeScreen = () => {
 
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => console.log('View Map')}
+              onPress={() => router.push('/(tabs)/MapScreen')}
               activeOpacity={0.7}
             >
               <View style={[styles.actionIconContainer, { backgroundColor: '#e3f2fd' }]}>
-                <MaterialCommunityIcons name="map" size={32} color="#1565c0" />
+                <MaterialCommunityIcons name="map-marker-radius-outline" size={32} color="#0d47a1" />
               </View>
               <Text style={styles.actionCardTitle}>View Map</Text>
               <Text style={styles.actionCardSubtitle}>Explore Sightings</Text>
             </TouchableOpacity>
-          </View>
-        </View>
 
-        {/* Upload New Report */}
-        <View style={styles.section}>
-          <View style={styles.uploadSection}>
-            <Text style={styles.uploadTitle}>Upload new report</Text>
-            <TouchableOpacity onPress={() => router.push('/(tabs)/UploadReport')} style={styles.addButton}>
-              <Ionicons name="add-circle" size={36} color="#000" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Analytics Section */}
-        <View style={styles.analyticsSection}>
-          <Text style={styles.analyticsTitle}>Analytics</Text>
-
-          <View style={styles.analyticsRow}>
-            <Text style={styles.analyticsLabel}>Total Reports</Text>
-            <Text style={styles.analyticsCount}>{totalReports}</Text>
-          </View>
-
-          <View style={styles.buttonWrapper}>
             <TouchableOpacity
-              style={styles.viewReportsButton}
-              onPress={() => router.push("/(tabs)/ReportsHistory")}
+              style={styles.actionCard}
+              onPress={() => router.push('/(tabs)/NGOListScreen')}
+              activeOpacity={0.7}
             >
-              <Ionicons name="document-text-outline" size={20} color="black" />
-              <Text style={styles.viewReportsButtonText}> My Reports</Text>
+              <View style={[styles.actionIconContainer, { backgroundColor: '#fce4ec' }]}>
+                <Ionicons name="people-outline" size={32} color="#ad1457" />
+              </View>
+              <Text style={styles.actionCardTitle}>NGO List</Text>
+              <Text style={styles.actionCardSubtitle}>Emergency Contacts</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        {/* ── Analytics Section ── */}
+        <View style={styles.analyticsSection}>
+          <View style={styles.analyticsTitleRow}>
+            <Text style={styles.analyticsTitle}>My Activity</Text>
+            <Text style={styles.analyticsSubtitle}>Your conservation impact</Text>
+          </View>
+
+          <View style={styles.statCardsRow}>
+            <View style={[styles.statCard, { backgroundColor: '#e8f5e9' }]}>
+              <View style={[styles.statIconCircle, { backgroundColor: '#c8e6c9' }]}>
+                <Ionicons name="document-text" size={18} color="#2d6a4f" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#2d6a4f' }]}>{totalReports}</Text>
+              <Text style={styles.statLabel}>Total Reports</Text>
+            </View>
+
+            <View style={[styles.statCard, { backgroundColor: '#FFF9C4' }]}>
+              <View style={[styles.statIconCircle, { backgroundColor: '#FFECB3' }]}>
+                <Ionicons name="calendar" size={18} color="#F9A825" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#E65100' }]}>{thisMonthReports}</Text>
+              <Text style={styles.statLabel}>This Month</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.statCard, { backgroundColor: '#d8f3dc' }]}
+              onPress={() => router.push('/(tabs)/AwardsScreen')}
+              activeOpacity={0.8}
+            >
+              <View style={[styles.statIconCircle, { backgroundColor: '#95d5b2' }]}>
+                <Ionicons name="trophy" size={18} color="#1b4332" />
+              </View>
+              <Text style={[styles.statNumber, { color: '#1b4332' }]}>—</Text>
+              <Text style={styles.statLabel}>Badges</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.analyticsDivider} />
+
+          <TouchableOpacity
+            onPress={() => router.push('/(tabs)/ReportsHistory')}
+            activeOpacity={0.85}
+            style={styles.contributionBanner}
+          >
+            <View style={styles.contributionLeft}>
+              <View style={styles.contributionIconBox}>
+                <Ionicons name="trending-up" size={20} color="#B8860B" />
+              </View>
+              <View style={{ marginLeft: 12 }}>
+                <Text style={styles.contributionTitle}>My Reports</Text>
+                <Text style={styles.contributionSub}>Track your full sighting history</Text>
+              </View>
+            </View>
+            <View style={styles.contributionChevron}>
+              <Ionicons name="chevron-forward" size={18} color="#1b4332" />
+            </View>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -291,7 +352,11 @@ const HomeScreen = () => {
       <Animated.View style={[styles.sidebar, { left: slideAnim }]}>
         <View style={styles.sidebarHeader}>
           <View style={styles.sidebarProfile}>
-            <Ionicons name="person-circle" size={60} color="#2d6a4f" />
+            {profileImage ? (
+              <Image source={{ uri: profileImage }} style={styles.sidebarAvatar} />
+            ) : (
+              <Ionicons name="person-circle" size={60} color="#2d6a4f" />
+            )}
             <Text style={styles.sidebarName}>{username || 'Community User'}</Text>
             <Text style={styles.sidebarEmail}>{email || ''}</Text>
           </View>
@@ -323,6 +388,21 @@ const HomeScreen = () => {
               <Ionicons name="trophy-outline" size={22} color="#2d6a4f" />
             </View>
             <Text style={styles.sidebarText}>Awards & Badges</Text>
+            <Ionicons name="chevron-forward" size={20} color="#999" />
+          </TouchableOpacity>
+
+          {/* ✅ Survey Notifications */}
+          <TouchableOpacity
+            style={styles.sidebarItem}
+            onPress={() => {
+              toggleSidebar();
+              router.push('/(tabs)/SurveyNotifications');
+            }}
+          >
+            <View style={styles.sidebarIconWrapper}>
+              <Ionicons name="notifications-outline" size={22} color="#2d6a4f" />
+            </View>
+            <Text style={styles.sidebarText}>Survey Notifications</Text>
             <Ionicons name="chevron-forward" size={20} color="#999" />
           </TouchableOpacity>
 
@@ -401,11 +481,23 @@ const styles = StyleSheet.create({
   factContainer: {
     borderRadius: 16,
     padding: 24,
+    position: 'relative',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
     elevation: 6,
+  },
+  factNotificationButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   factHeader: {
     flexDirection: 'row',
@@ -488,44 +580,148 @@ const styles = StyleSheet.create({
     color: '#666',
   },
 
-  analyticsSection: {
-    marginHorizontal: 15,
-    padding: 15,
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    elevation: 3,
-  },
-  analyticsTitle: { fontSize: 18, fontWeight: '600', marginBottom: 10 },
-  analyticsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  analyticsLabel: { fontSize: 16, color: '#555' },
-  analyticsCount: { fontSize: 20, fontWeight: '600', color: '#333' },
-
-  buttonWrapper: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 5,
-  },
-
-  viewReportsButton: {
+  // NGO Card Styles
+  ngoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFD700',
-    padding: 15,
-    margin: 15,
-    borderRadius: 10,
-    width: '100%',
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  
-  viewReportsButtonText: {
-    color: 'black',
+  ngoIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+  ngoTextContainer: {
+    flex: 1,
+  },
+  ngoCardTitle: {
     fontSize: 16,
     fontWeight: '700',
-    marginLeft: 8,
+    color: '#1a1a1a',
+    marginBottom: 4,
+  },
+  ngoCardSubtitle: {
+    fontSize: 12,
+    color: '#666',
+  },
+
+  // ── Analytics Section ──
+  analyticsSection: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    marginBottom: 8,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  analyticsTitleRow: {
+    marginBottom: 16,
+  },
+  analyticsTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a1a1a',
+  },
+  analyticsSubtitle: {
+    fontSize: 12,
+    color: '#888',
+    marginTop: 2,
+  },
+  // Stat Cards
+  statCardsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  statCard: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    alignItems: 'center',
+  },
+  statIconCircle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  statNumber: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#2d6a4f',
+    marginBottom: 2,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: '#666',
+    fontWeight: '500',
+    textAlign: 'center',
+  },
+  analyticsDivider: {
+    height: 1,
+    backgroundColor: '#f0f0f0',
+    marginVertical: 16,
+  },
+
+  // Contribution Banner
+  contributionBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#FFFBF0',
+    borderWidth: 1,
+    borderColor: '#FFD700',
+  },
+  contributionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  contributionIconBox: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#FFE082',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  contributionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1b4332',
+  },
+  contributionSub: {
+    fontSize: 11,
+    color: '#6d4c41',
+    marginTop: 2,
+  },
+  contributionChevron: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#FFD700',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 
   // ✅ Sidebar styles
@@ -555,6 +751,11 @@ const styles = StyleSheet.create({
   sidebarProfile: {
     alignItems: 'center',
     paddingHorizontal: 20,
+  },
+  sidebarAvatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
   },
   sidebarName: {
     fontSize: 18,
