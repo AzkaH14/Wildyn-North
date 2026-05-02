@@ -74,7 +74,7 @@ const Aboutus = () => {
           end={{ x: 1, y: 1 }}
           style={styles.heroContainer}
         >
-          <Ionicons name="leaf-outline" size={64} color="#f9dc3aff" />
+          <Ionicons name="leaf-outline" size={64} color="#FFD700" />
           <Text style={styles.heroTitle}>Wildlife Conservation Platform</Text>
           <Text style={styles.heroSubtitle}>
             Empowering communities to protect Pakistan's endangered species
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#000000ff',
+    color: '#1a1a1a',
   },
   heroContainer: {
     marginHorizontal: 20,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     marginTop: 24,
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
     alignItems: 'center',
   },
   footerText: {
