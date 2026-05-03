@@ -16,6 +16,10 @@ const reportSchema = new mongoose.Schema({
   specieName: {
     type: String,
     required: true,
+  }, 
+  speciefact: {
+    type: String,
+    required: true,
   },
   healthStatus: {
     type: String,
