@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     console.log(`📊 GET /api/reports - Returning ${reports.length} reports from database`);
     res.json(reports);
   } catch (error) {
-    console.error('❌ Error fetching all reports:', error);
+    console.error('Error fetching all reports:', error);
     res.status(500).json({ message: error.message });
   }
 });
