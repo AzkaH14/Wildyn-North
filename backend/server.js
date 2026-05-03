@@ -6,8 +6,6 @@ require('dotenv').config();
 const app = express();
 
 // Disable Express's default error handler HTML responses
-app.set('x-powered-by', false);
-
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
