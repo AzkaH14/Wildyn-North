@@ -18,6 +18,6 @@ const KeyboardAwareContainer = ({ children }) => {
   );
 };
 
-export default KeyboardAwareContainer;
+export default KeyboardAwardContainer;
 
 

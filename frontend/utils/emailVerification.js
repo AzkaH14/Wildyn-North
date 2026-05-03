@@ -52,7 +52,7 @@ export const verifyEmail = async (email) => {
       success: false,
       isValid: false,
       error: error.message,
-      message: 'Unable to verify email. Please check your connection.'
+      message: 'Unable to verify email. Please check your internet connection.'
     };
   }
 };

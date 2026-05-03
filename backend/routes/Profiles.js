@@ -93,7 +93,7 @@ router.delete('/:userId/image', async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: 'Profile image deleted successfully'
+      message: 'Profile image has been deleted'
     });
   } catch (error) {
     console.error('Delete image error:', error);

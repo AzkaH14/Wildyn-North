@@ -25,7 +25,7 @@ const reportSchema = new mongoose.Schema({
   healthStatus: {
     type: String,
     required: true,
-    enum: ['Healthy', 'Injured', 'Sick', 'Hungry'],
+    enum: ['Healthy', 'Injured', 'Sick', 'Hungrry'],
   },
   location: {
     latitude: {

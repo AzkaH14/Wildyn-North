@@ -150,7 +150,7 @@ const ReportsFeed = () => {
       commentText.toLowerCase().includes(w)
     );
     if (isOffensive) {
-      Alert.alert("Inappropriate Content", "Your comment contains inappropriate words.");
+      Alert.alert("Inappropriate Content", "Your comment contains abusive or inappropriate words.");
       return;
     }
 

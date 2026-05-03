@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
 import * as React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
+import { HapticTab } from '../../assets/components/haptic-tab';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -15,6 +15,7 @@ export default function TabLayout() {
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
         tabBarButton: HapticTab,
+        tabBarStyle: { display: 'none' },
       }}
     >
       <Tabs.Screen
@@ -24,7 +25,7 @@ export default function TabLayout() {
           title: 'Index',
         }}
       />
-      
+
       {/* ✅ Home Screen */}
       <Tabs.Screen
         name="HomeScreen"
@@ -71,13 +72,56 @@ export default function TabLayout() {
           title: 'User Profile',
         }}
       />
-      
+
       {/* ✅ Reports History Screen — Hidden from tab bar */}
       <Tabs.Screen
         name="ReportsHistory"
         options={{
           href: null,
           title: 'Reports History',
+        }}
+      />
+
+      <Tabs.Screen
+        name="AwardsScreen"
+        options={{
+          href: null,
+          title: 'Awards & Badges',
+        }}
+      />
+
+      {/* ✅ Map Visualization Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="MapVisualization"
+        options={{
+          href: null,
+          title: 'Map Visualization',
+        }}
+      />
+
+      {/* ✅ Verification Status Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="VerificationStatus"
+        options={{
+          href: null,
+          title: 'Verification Status',
+        }}
+      />
+
+      {/* ✅ Notification Screens — Hidden from tab bar */}
+      <Tabs.Screen
+        name="CommunityNotifications"
+        options={{
+          href: null,
+          title: 'Community Notifications',
+        }}
+      />
+
+      <Tabs.Screen
+        name="ResearcherNotifications"
+        options={{
+          href: null,
+          title: 'Researcher Notifications',
         }}
       />
 
@@ -157,7 +201,33 @@ export default function TabLayout() {
           title: 'Forget Password',
         }}
       />
-      
+
+      {/* ✅ ORCID Sign In Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="OrcidSignIn"
+        options={{
+          href: null,
+          title: 'ORCID Sign In',
+        }}
+      />
+
+      {/* ✅ Education Screen — Hidden from tab bar */}
+      <Tabs.Screen
+        name="EducationScreen"
+        options={{
+          href: null,
+          title: 'Education Screen',
+        }}
+      />
+
+      <Tabs.Screen
+        name="NotificationCenter"
+        options={{
+          href: null,
+          title: 'Notifications',
+        }}
+      />
+
     </Tabs>
   );
 }

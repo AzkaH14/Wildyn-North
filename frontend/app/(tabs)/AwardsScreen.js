@@ -36,7 +36,7 @@ const badgeTiers = [
     gradient: ['#C0C0C0', '#A8A8A8'],
     minReports: 5,
     maxReports: 9,
-    description: 'Committed to wildlife protection',
+    description: 'Committed to wildllife Protection',
   },
   {
     id: 3,

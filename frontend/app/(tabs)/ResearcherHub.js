@@ -93,7 +93,7 @@ export default function ResearcherHub() {
             </View>
             <Text style={styles.cardTitle}>Upload Survey Form</Text>
             <Text style={styles.cardDescription}>
-              Upload and share survey forms with the community
+              Upload and share survey forms with the community users
             </Text>
             <View style={styles.cardAction}>
               <Text style={[styles.cardActionText, { color: '#2d6a4f' }]}>

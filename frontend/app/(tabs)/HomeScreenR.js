@@ -15,11 +15,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import BottomNav from '../../components/BottomNav';
+import BottomNav from '../../assets/components/BottomNav';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
-const API_URL = 'http://192.168.109.181:5000';
+const API_URL = 'http://192.168.10.17:5050';
 
 const factsData = [
   {
@@ -65,6 +65,16 @@ const HomeScreenR = () => {
   const [email, setEmail] = useState('');
   const [totalReports, setTotalReports] = useState(0);
 
+  const fetchWithTimeout = async (url, options = {}, timeoutMs = 5000) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+      return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  };
+
   const toggleSidebar = () => {
     Animated.timing(slideAnim, {
       toValue: sidebarOpen ? -width * 0.75 : 0,
@@ -75,49 +85,40 @@ const HomeScreenR = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // Load profile image from storage
-  const loadProfileImage = async () => {
+  const loadDashboardData = async () => {
     try {
-      const savedProfileImage = await AsyncStorage.getItem('profileImage');
-      if (savedProfileImage) {
-        setProfileImage(savedProfileImage);
-      }
-    } catch (error) {
-      console.log('Error loading profile image:', error);
-    }
-  };
+      const [savedProfileImage, userId, savedUsername, savedEmail] = await Promise.all([
+        AsyncStorage.getItem('profileImage'),
+        AsyncStorage.getItem('userId'),
+        AsyncStorage.getItem('username'),
+        AsyncStorage.getItem('userEmail'),
+      ]);
 
-  const loadReportCount = async () => {
-    try {
-      const res = await fetch(`${API_URL}/api/reports`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (Array.isArray(data)) setTotalReports(data.length);
-    } catch (e) {
-      // fail silently for count
-    }
-  };
-
-  const loadUserProfile = async () => {
-    try {
-      const userId = await AsyncStorage.getItem('userId');
-      if (userId) {
-        try {
-          const response = await fetch(`${API_URL}/api/auth/profile/${userId}`);
-          const result = await response.json();
-          if (response.ok && result.user) {
-            setUsername(result.user.username || '');
-            setEmail(result.user.email || '');
-            await AsyncStorage.setItem('username', result.user.username || '');
-            await AsyncStorage.setItem('userEmail', result.user.email || '');
-            return;
-          }
-        } catch (_) {}
-      }
-      const savedUsername = await AsyncStorage.getItem('username');
-      const savedEmail = await AsyncStorage.getItem('userEmail');
+      if (savedProfileImage) setProfileImage(savedProfileImage);
       if (savedUsername) setUsername(savedUsername);
       if (savedEmail) setEmail(savedEmail);
+
+      const requests = [fetchWithTimeout(`${API_URL}/api/reports`)];
+      if (userId) {
+        requests.push(fetchWithTimeout(`${API_URL}/api/auth/profile/${userId}`));
+      }
+
+      const [reportsRes, profileRes] = await Promise.allSettled(requests);
+
+      if (reportsRes.status === 'fulfilled' && reportsRes.value?.ok) {
+        const reports = await reportsRes.value.json();
+        if (Array.isArray(reports)) setTotalReports(reports.length);
+      }
+
+      if (profileRes?.status === 'fulfilled' && profileRes.value?.ok) {
+        const result = await profileRes.value.json();
+        if (result?.user) {
+          setUsername(result.user.username || savedUsername || '');
+          setEmail(result.user.email || savedEmail || '');
+          await AsyncStorage.setItem('username', result.user.username || '');
+          await AsyncStorage.setItem('userEmail', result.user.email || '');
+        }
+      }
     } catch (_) {}
   };
 
@@ -136,16 +137,12 @@ const HomeScreenR = () => {
     };
 
     ensureResearcher();
-    loadProfileImage();
-    loadReportCount();
-    loadUserProfile();
+    loadDashboardData();
   }, []);
 
   useFocusEffect(
     React.useCallback(() => {
-      loadProfileImage();
-      loadReportCount();
-      loadUserProfile();
+      loadDashboardData();
     }, [])
   );
 
@@ -208,7 +205,7 @@ const HomeScreenR = () => {
           <View style={styles.actionCardsGrid}>
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => router.push('/(tabs)/ReportsFeed')}
+              onPress={() => router.push('/(tabs)/ReportsFeedR')}
               activeOpacity={0.7}
             >
               <View style={[styles.actionIconContainer, { backgroundColor: '#e8f5e9' }]}> 
@@ -219,11 +216,11 @@ const HomeScreenR = () => {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionCard}
-              onPress={() => console.log('Open Research Map')}
+              onPress={() => router.push('/(tabs)/MapScreen')}
               activeOpacity={0.7}
             >
               <View style={[styles.actionIconContainer, { backgroundColor: '#e3f2fd' }]}> 
-                <MaterialCommunityIcons name="map-search-outline" size={32} color="#1565c0" />
+                <MaterialCommunityIcons name="map-marker-star-outline" size={32} color="#0d47a1" />
               </View>
               <Text style={styles.actionCardTitle}>Map</Text>
               <Text style={styles.actionCardSubtitle}>Research Areas</Text>
@@ -285,7 +282,7 @@ const HomeScreenR = () => {
             style={styles.sidebarItem}
             onPress={() => {
               toggleSidebar();
-              router.push('/(tabs)/ReportsFeed');
+              router.push('/(tabs)/ReportsFeedR');
             }}
           >
             <View style={styles.sidebarIconWrapper}>

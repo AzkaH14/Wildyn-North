@@ -1,4 +1,5 @@
 
+
 const mongoose = require('mongoose');
 
 const researcherSchema = new mongoose.Schema({
@@ -57,7 +58,7 @@ const researcherSchema = new mongoose.Schema({
     default: null,
   },
   resetTokenExpiry: {
-    type: Date,
+    type:Date,
     default: null,
   },
   createdAt: {

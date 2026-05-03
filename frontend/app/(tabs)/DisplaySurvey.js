@@ -59,7 +59,7 @@ export default function DisplaySurvey() {
         router.back();
       }
     } catch (error) {
-      Alert.alert('Error', 'Failed to load survey');
+      Alert.alert('Error', 'Failed to Load Survey');
       console.error(error);
     } finally {
       setLoading(false);

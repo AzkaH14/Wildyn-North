@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-
->>>>>>> 2aecc29701bd4bbd03110a40e34f584b694f1f20
 const express = require('express');
 const router = express.Router();
 const Wildlife = require('../models/Wildlife');

@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 30,
   },
   loginButtonText: {
     fontSize: 18,
