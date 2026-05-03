@@ -35,8 +35,6 @@ router.post('/', async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
-
-// DELETE wildlife fact
 router.delete('/:id', async (req, res) => {
   try {
     const wildlife = await Wildlife.findByIdAndDelete(req.params.id);
