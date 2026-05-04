@@ -19,7 +19,7 @@ router.get('/:id', async (req, res) => {
     if (!wildlife) {
       return res.status(404).json({ message: 'Wildlife fact not found' });
     }
-    res.json(wildlife);
+    res.json(library);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
