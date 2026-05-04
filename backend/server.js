@@ -8,7 +8,7 @@ const app = express();
 // Disable Express's default error handler HTML responses
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '12mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Force JSON responses - prevent HTML error pages
