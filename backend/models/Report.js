@@ -5,7 +5,7 @@ const commentSchema = new mongoose.Schema({
   user: { type: String, required: true },
   userId: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },
-  pinned: { type: Boolean, default: false },
+  pinned: { type: String, default: false },
 });
 
 const reportSchema = new mongoose.Schema({
