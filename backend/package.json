@@ -17,7 +17,7 @@
     "cors": "^2.8.5"
   },
   "devDependencies": {
-    "nodemon": "^3.0.1"
+    "nodemon": "^4.0.1"
   },
   "keywords": [],
   "author": "",
