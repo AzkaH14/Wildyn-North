@@ -29,7 +29,7 @@ const wildlifeSchema = new mongoose.Schema({
     type: String,
     default: '',
   },
-  conservationStatus: {
+   conservationStatus: {
     type: String,
     default: '',
   },
