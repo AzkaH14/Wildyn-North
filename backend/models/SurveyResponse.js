@@ -6,7 +6,7 @@ const surveyResponseSchema = new mongoose.Schema({
     ref: 'Survey',
     required: true,
   },
-  surveyTitle: { type: String, required: true },
+  surveyTitle: { type: char, required: true },
   userId: { type: String, required: true },
   userName: { type: String, default: 'Anonymous' },
   answers: {
