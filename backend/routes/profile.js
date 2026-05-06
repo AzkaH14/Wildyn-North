@@ -87,10 +87,6 @@ router.delete('/:userId/image', async (req, res) => {
       return res.status(404).json({ message: 'Profile not found' });
     }
 
-    profile.profileImage = null;
-    profile.imageType = 'image/jpeg';
-    await profile.save();
-
     res.status(200).json({
       success: true,
       message: 'Profile image deleted successfully'
