@@ -103,7 +103,10 @@ router.get('/latest', async (req, res) => {
       const d = new Date(since);
       if (!isNaN(d.getTime())) query.createdAt = { $gt: d };
     }
-
+  const reports = await Report.find(query)
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .select('_id specieName healthStatus username userId createdAt location');
   
     // Filter out current user's own reports on server side too
     const filtered = userId
