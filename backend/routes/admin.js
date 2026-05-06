@@ -725,7 +725,13 @@ router.get('/dashboard/stats', async (req, res) => {
       mongoose.model('User').countDocuments(),
     ]);
 
-    
+    res.json({
+      reports: {
+        total: totalReports,
+        spam: spamReports,
+        inappropriate: inappropriateReports,
+        normal: totalReports - spamReports - inappropriateReports,
+      },
       researchers: {
         pending: pendingResearchers,
         verified: verifiedResearchers,
