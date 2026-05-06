@@ -7,9 +7,7 @@ const fieldSchema = new mongoose.Schema({
     enum: ['text', 'number', 'textarea', 'dropdown', 'checkbox', 'date', 'time'],
     default: 'text',
   },
-  required: { type: Boolean, default: false },
-  placeholder: { type: String, default: '' },
-  options: [{ type: String }],
+ tions: [{ type: String }],
 });
 
 const surveySchema = new mongoose.Schema({
