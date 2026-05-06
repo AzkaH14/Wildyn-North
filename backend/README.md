@@ -40,7 +40,6 @@ FRONTEND_URL=http://localhost:3000
 1. Go to https://www.mongodb.com/cloud/atlas
 2. Create a free account
 3. Create a new cluster
-4. Get connection string and add to `.env`
 
 ### 4. Run the Server
 ```bash
